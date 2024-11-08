@@ -44,27 +44,44 @@
             padding: 5px;
             border-bottom: 1px solid #eee;
         }
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div class="control-panel">
         <h2>Screen Info Cast Controller</h2>
-        <button onclick="connectToReceiver()">Connect to Chromecast</button>
-        <button onclick="requestScreenInfo()">Get Screen Info</button>
-        <button onclick="stopCasting()">Stop Casting</button>
+        <button id="connectButton" onclick="connectToReceiver()">Connect to Chromecast</button>
+        <button id="screenInfoButton" onclick="requestScreenInfo()" disabled>Get Screen Info</button>
+        <button id="stopButton" onclick="stopCasting()" disabled>Stop Casting</button>
     </div>
     
-    <div id="status">Not connected</div>
+    <div id="status">Initializing...</div>
     <div id="screenInfo"></div>
 
     <script>
+        // Replace with your registered application ID from the Google Cast SDK Developer Console
         const APP_ID = '64F29018';
         const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
         let castSession = null;
-
-        function updateStatus(message) {
+        let castContext = null;
+        
+        function updateStatus(message, isError = false) {
             console.log(message);
-            document.getElementById('status').textContent = message;
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = isError ? 'error' : '';
+        }
+
+        function updateButtonStates(isConnected) {
+            document.getElementById('connectButton').disabled = isConnected;
+            document.getElementById('screenInfoButton').disabled = !isConnected;
+            document.getElementById('stopButton').disabled = !isConnected;
         }
 
         function displayScreenInfo(info) {
@@ -72,70 +89,124 @@
             let html = '<h3>Screen Information:</h3>';
             
             Object.entries(info).forEach(([key, value]) => {
-                html += `<div class="info-item">${key}: ${value}</div>`;
+                html += `<div class="info-item"><strong>${key}:</strong> ${value}</div>`;
             });
             
             container.innerHTML = html;
         }
 
         window['__onGCastApiAvailable'] = function(isAvailable) {
-            updateStatus(`Cast API available: ${isAvailable}`);
-            if (isAvailable) initializeCastApi();
+            if (isAvailable) {
+                initializeCastApi();
+            } else {
+                updateStatus('Google Cast API is not available', true);
+            }
         };
 
         function initializeCastApi() {
-            cast.framework.CastContext.getInstance().setOptions({
-                receiverApplicationId: APP_ID,
-                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
+            try {
+                castContext = cast.framework.CastContext.getInstance();
+                castContext.setOptions({
+                    receiverApplicationId: APP_ID,
+                    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+                    language: 'en-US',
+                    resumeSavedSession: false
+                });
 
-            // Add session listener
-            cast.framework.CastContext.getInstance().addEventListener(
-                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-                event => {
-                    if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
-                        castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-                        updateStatus('Connected to Chromecast');
-                        // Request screen info immediately after connection
-                        requestScreenInfo();
+                // Add session listener
+                castContext.addEventListener(
+                    cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+                    handleSessionStateChange
+                );
+
+                // Add error listener
+                castContext.addEventListener(
+                    cast.framework.CastContextEventType.CAST_STATE_CHANGED,
+                    handleCastStateChange
+                );
+
+                updateStatus('Cast API initialized');
+            } catch (error) {
+                updateStatus(`Failed to initialize Cast API: ${error.message}`, true);
+            }
+        }
+
+        function handleSessionStateChange(event) {
+            switch (event.sessionState) {
+                case cast.framework.SessionState.SESSION_STARTED:
+                    castSession = castContext.getCurrentSession();
+                    updateStatus('Connected to Chromecast');
+                    updateButtonStates(true);
+                    setupMessageListener();
+                    break;
+                case cast.framework.SessionState.SESSION_ENDED:
+                    castSession = null;
+                    updateStatus('Disconnected from Chromecast');
+                    updateButtonStates(false);
+                    document.getElementById('screenInfo').innerHTML = '';
+                    break;
+                case cast.framework.SessionState.SESSION_START_FAILED:
+                    updateStatus('Failed to start session', true);
+                    updateButtonStates(false);
+                    break;
+            }
+        }
+
+        function handleCastStateChange(event) {
+            if (event.castState === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+                updateStatus('No Chromecast devices found', true);
+            }
+        }
+
+        function setupMessageListener() {
+            if (!castSession) return;
+            
+            castSession.addMessageListener(NAMESPACE, (namespace, message) => {
+                try {
+                    const parsedMessage = typeof message === 'string' ? JSON.parse(message) : message;
+                    if (parsedMessage.type === 'screenInfo') {
+                        displayScreenInfo(parsedMessage.data);
                     }
+                } catch (error) {
+                    updateStatus(`Error processing message: ${error.message}`, true);
                 }
-            );
+            });
         }
 
-        function connectToReceiver() {
+        async function connectToReceiver() {
             updateStatus('Connecting to Chromecast...');
-            cast.framework.CastContext.getInstance().requestSession()
-                .catch(error => updateStatus(`Connection failed: ${error.message}`));
+            try {
+                await castContext.requestSession();
+            } catch (error) {
+                updateStatus(`Connection failed: ${error.message}`, true);
+                updateButtonStates(false);
+            }
         }
 
-        function requestScreenInfo() {
+        async function requestScreenInfo() {
             if (!castSession) {
-                updateStatus('Not connected to Chromecast');
+                updateStatus('Not connected to Chromecast', true);
                 return;
             }
 
-            castSession.sendMessage(NAMESPACE, { command: 'getScreenInfo' })
-                .then(() => updateStatus('Screen info requested'))
-                .catch(error => updateStatus(`Error requesting screen info: ${error.message}`));
-
-            // Add listener for response
-            castSession.addMessageListener(NAMESPACE, (namespace, message) => {
-                if (message.type === 'screenInfo') {
-                    displayScreenInfo(message.data);
-                }
-            });
+            try {
+                await castSession.sendMessage(NAMESPACE, { command: 'getScreenInfo' });
+                updateStatus('Screen info requested');
+            } catch (error) {
+                updateStatus(`Error requesting screen info: ${error.message}`, true);
+            }
         }
 
-        function stopCasting() {
-            if (castSession) {
-                castSession.endSession(true)
-                    .then(() => {
-                        updateStatus('Casting stopped');
-                        castSession = null;
-                        document.getElementById('screenInfo').innerHTML = '';
-                    })
-                    .catch(error => updateStatus(`Error stopping cast: ${error.message}`));
+        async function stopCasting() {
+            if (!castSession) return;
+
+            try {
+                await castSession.endSession(true);
+                updateStatus('Casting stopped');
+                document.getElementById('screenInfo').innerHTML = '';
+                updateButtonStates(false);
+            } catch (error) {
+                updateStatus(`Error stopping cast: ${error.message}`, true);
             }
         }
     </script>
