@@ -1,49 +1,107 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cast the leader</title>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Message Test Sender</title>
     <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-  </head>
-  <body>
-<main>
-    <header>
-      <h1 class="text-white font-bold text-lg">Cast The leader</h1>
-    <h3 id="status"></h3>
-    </header>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+        }
+        #log {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h2>Message Test</h2>
+    <button onclick="connectToReceiver()">Connect</button>
+    <button onclick="sendTestMessage()">Send Test Message</button>
+    <button onclick="stopCasting()">Stop</button>
+    <div id="log"></div>
 
-    <section class="theUicontainer">
+    <script>
+        const APP_ID = '64F29018';
+        const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
+        let castSession = null;
 
-      <div class="addremovewrap">
-        <div
-          role="button"
-          class="addremove addInput">
-          +
-        </div>
-        <p >Add URL input</p>
-      </div>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `${time}: ${message}<br>` + logDiv.innerHTML;
+            console.log(`${time}: ${message}`);
+        }
 
+        window['__onGCastApiAvailable'] = function(isAvailable) {
+            if (isAvailable) initializeCastApi();
+        };
 
-      <div role="button" class="btn" id="castButton">connect to chromecast</div>
-    </section>
+        function initializeCastApi() {
+            cast.framework.CastContext.getInstance().setOptions({
+                receiverApplicationId: APP_ID,
+                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
 
-    <section class="theInputcontainer">
-     
-      <div class="addremovewrap" style="width:100%;">
-      <input type="text" class="input" placeholder="Enter URL" />
+            // Add session listener
+            cast.framework.CastContext.getInstance().addEventListener(
+                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+                event => {
+                    if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
+                        castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+                        log('Connected to receiver');
+                        
+                        // Add message listener
+                        castSession.addMessageListener(NAMESPACE, function(namespace, message) {
+                            log('Received response: ' + JSON.stringify(message));
+                        });
+                    }
+                }
+            );
+        }
 
-      <div role="button" class="addremove removeInput">
-      -
-      </div>
-     </div>
+        function connectToReceiver() {
+            cast.framework.CastContext.getInstance().requestSession()
+                .then(() => log('Session created'))
+                .catch(error => log('Error: ' + error.message));
+        }
 
-    </section>
+        function sendTestMessage() {
+            if (!castSession) {
+                log('Not connected!');
+                return;
+            }
 
+            const message = {
+                command: 'getScreenInfo',
+                timestamp: new Date().toISOString()
+            };
 
+            log('Sending message: ' + JSON.stringify(message));
+            
+            castSession.sendMessage(NAMESPACE, message)
+                .then(() => log('Message sent successfully'))
+                .catch(error => log('Send error: ' + error.message));
+        }
 
-  </main>
-    <script type="module" src="/main.js"></script>
-  </body>
+        function stopCasting() {
+            if (castSession) {
+                castSession.endSession(true)
+                    .then(() => {
+                        log('Session ended');
+                        castSession = null;
+                    })
+                    .catch(error => log('Error: ' + error.message));
+            }
+        }
+    </script>
+</body>
 </html>

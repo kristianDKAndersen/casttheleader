@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cast the leader</title>
+    <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+  </head>
+  <body>
+<main>
+    <header>
+      <h1 class="text-white font-bold text-lg">Cast The leader</h1>
+    <h3 id="status"></h3>
+    </header>
+
+    <section class="theUicontainer">
+
+      <div class="addremovewrap">
+        <div
+          role="button"
+          class="addremove addInput">
+          +
+        </div>
+        <p >Add URL input</p>
+      </div>
+
+
+      <div role="button" class="btn" id="castButton">connect to chromecast</div>
+    </section>
+
+    <section class="theInputcontainer">
+     
+      <div class="addremovewrap" style="width:100%;">
+      <input type="text" class="input" placeholder="Enter URL" />
+
+      <div role="button" class="addremove removeInput">
+      -
+      </div>
+     </div>
+
+    </section>
+
+
+
+  </main>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
