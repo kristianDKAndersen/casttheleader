@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Message Test Receiver</title>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: monospace;
+            margin: 20px;
+        }
+        #debug {
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="debug">Initializing...</div>
+
+    <script>
+        const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
+        const debug = document.getElementById('debug');
+
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            console.log(`${time}: ${message}`);
+            debug.innerHTML = `${time}: ${message}\n` + debug.innerHTML;
+        }
+
+        function initializeReceiver() {
+            try {
+                log('Initializing receiver...');
+                const context = cast.framework.CastReceiverContext.getInstance();
+                
+                // Enable debug logging
+                context.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
+
+                // Add message listener
+                context.addCustomMessageListener(NAMESPACE, event => {
+                    // Log the raw event data
+                    log('Raw event data: ' + JSON.stringify(event.data));
+                    
+                    // Access the command directly without stringify
+                    const command = event.data.command;
+                    log('Received command: ' + command);
+
+                    // Compare the raw command
+                    if (command === 'getScreenInfo') {
+                        log('Command match found, sending response');
+                        
+                        const info = {
+                            message: "cool beans",
+                            timestamp: new Date().toISOString()
+                        };
+
+                        // Send response back to sender
+                        context.sendCustomMessage(NAMESPACE, event.senderId, {
+                            type: 'screenInfo',
+                            data: info
+                        });
+                        
+                        log('Response sent: ' + JSON.stringify(info));
+                    } else {
+                        log('Command did not match getScreenInfo');
+                    }
+                });
+
+                // Start receiver
+                context.start();
+                log('Receiver started');
+
+            } catch (error) {
+                log('Error: ' + error.message);
+                console.error('Full error:', error);
+            }
+        }
+
+        // Initialize when loaded
+        if (cast && cast.framework) {
+            initializeReceiver();
+        } else {
+            log('Cast API not available');
+        }
+    </script>
+</body>
+</html>

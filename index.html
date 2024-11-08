@@ -1,105 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Message Test Sender</title>
-    <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-        }
-        #log {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 10px;
-            height: 200px;
-            overflow-y: auto;
-            font-family: monospace;
-        }
-    </style>
+    <title>Chromecast Sender</title>
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </head>
 <body>
-    <h2>Message Test</h2>
-    <button onclick="connectToReceiver()">Connect</button>
-    <button onclick="sendTestMessage()">Send Test Message</button>
-    <button onclick="stopCasting()">Stop</button>
-    <div id="log"></div>
+    <h1>Chromecast Sender</h1>
+    <button id="castButton">Connect to Chromecast</button>
+    <button id="sendButton" disabled>Send "Hello"</button>
 
     <script>
-        const APP_ID = '64F29018';
-        const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
+        const applicationId = 'ED052386';
         let castSession = null;
 
-        function log(message) {
-            const logDiv = document.getElementById('log');
-            const time = new Date().toLocaleTimeString();
-            logDiv.innerHTML = `${time}: ${message}<br>` + logDiv.innerHTML;
-            console.log(`${time}: ${message}`);
-        }
-
-        window['__onGCastApiAvailable'] = function(isAvailable) {
-            if (isAvailable) initializeCastApi();
+        window.__onGCastApiAvailable = function(isAvailable) {
+            if (isAvailable) {
+                initializeCastApi();
+            }
         };
 
         function initializeCastApi() {
-            cast.framework.CastContext.getInstance().setOptions({
-                receiverApplicationId: APP_ID,
+            const context = cast.framework.CastContext.getInstance();
+            context.setOptions({
+                receiverApplicationId: applicationId,
                 autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
             });
 
-            // Add session listener
-            cast.framework.CastContext.getInstance().addEventListener(
-                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-                event => {
-                    if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
-                        castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-                        log('Connected to receiver');
-                        
-                        // Add message listener
-                        castSession.addMessageListener(NAMESPACE, function(namespace, message) {
-                            log('Received response: ' + JSON.stringify(message));
-                        });
-                    }
+            const castButton = document.getElementById('castButton');
+            castButton.addEventListener('click', async () => {
+                try {
+                    castSession = await context.requestSession();
+                    document.getElementById('sendButton').disabled = false;
+                } catch (error) {
+                    console.error('Error:', error);
                 }
-            );
+            });
+
+            document.getElementById('sendButton').addEventListener('click', sendMessage);
         }
 
-        function connectToReceiver() {
-            cast.framework.CastContext.getInstance().requestSession()
-                .then(() => log('Session created'))
-                .catch(error => log('Error: ' + error.message));
-        }
-
-        function sendTestMessage() {
-            if (!castSession) {
-                log('Not connected!');
-                return;
-            }
-
-            const message = {
-                command: 'getScreenInfo',
-                timestamp: new Date().toISOString()
-            };
-
-            log('Sending message: ' + JSON.stringify(message));
-            
-            castSession.sendMessage(NAMESPACE, message)
-                .then(() => log('Message sent successfully'))
-                .catch(error => log('Send error: ' + error.message));
-        }
-
-        function stopCasting() {
+        function sendMessage() {
             if (castSession) {
-                castSession.endSession(true)
+                const message = 'hello';
+                const namespace = 'urn:x-cast:com.example.message';
+                
+                // Get the cast message channel
+                const channel = castSession.loadMedia 
+                    ? castSession
+                    : castSession.getSessionObj();
+
+                channel.sendMessage(namespace, message)
                     .then(() => {
-                        log('Session ended');
-                        castSession = null;
+                        console.log('Message sent successfully');
                     })
-                    .catch(error => log('Error: ' + error.message));
+                    .catch((error) => {
+                        console.error('Error sending message:', error);
+                    });
+            } else {
+                console.error('No active session');
             }
         }
     </script>
