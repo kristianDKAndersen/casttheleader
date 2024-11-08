@@ -5,9 +5,11 @@ export class ChromecastManager {
     this.APP_ID = '64F29018';
     this.NAMESPACE = 'urn:x-cast:com.screeninfo.app';
 
+    this.statusText = document.getElementById('status');
     // State
     this.castSession = null;
     this.status = 'Initializing...';
+    this.statusText.innerHTML = 'Initializing...';
     this.screenInfo = null;
     this.isConnected = false;
     this.isAvailable = false;
@@ -59,6 +61,9 @@ export class ChromecastManager {
       event => {
         if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
           this.castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+
+          this.statusText.innerHTML = 'Connected to Chromecast';
+
           this.setState('status', 'Connected to Chromecast');
           this.setState('isConnected', true);
         } else if (event.sessionState === cast.framework.SessionState.SESSION_ENDED) {
@@ -73,9 +78,11 @@ export class ChromecastManager {
   async connectToReceiver() {
     try {
       this.setState('status', 'Connecting to Chromecast...');
+      this.statusText.innerHTML = 'Connecting to Chromecast...';
       await cast.framework.CastContext.getInstance().requestSession();
     } catch (error) {
       this.setState('status', `Connection failed: ${error.message}`);
+      this.statusText.innerHTML = `Connection failed: ${error.message}`;
       throw error;
     }
   }

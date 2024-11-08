@@ -350,7 +350,7 @@ const scaler = new IframeScaler({
     targetHeight: 1400
 });*/
 
-        const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
+        const NAMESPACE = 'urn:x-cast:com.custom.message';
         const debug = document.getElementById('debug');
         const startTime = Date.now();
 
@@ -478,11 +478,13 @@ const scaler = new IframeScaler({
 
         // Initialize when the page loads
         window.addEventListener('load', () => {
-            if (cast && cast.framework) {
-                initializeReceiver();
-            } else {
-                log('ERROR: Cast API not available');
-            }
+            window['__onGCastApiAvailable'] = function(isAvailable) {
+                if (isAvailable) {
+                    initializeReceiver();
+                } else {
+                    log('ERROR: Cast API not available');
+                }
+            };
         });
     </script>
         <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>

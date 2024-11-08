@@ -1,12 +1,42 @@
 import UrlSanitizer from './utils/UrlSanitizer.js';
 
-import { ChromecastManager } from './ChromecastManager';
+import { Chromecast } from './chromecast.js';
 
 const uiClicks = () => {
   document.addEventListener('DOMContentLoaded', () => {
-    const chromecast = new ChromecastManager();
-    // Initialize and get cleanup function
-    chromecast.initialize();
+    const chromecast = Chromecast();
+    // Check if Chromecast is available
+
+    if (chromecast.isAvailable()) {
+      console.log(chromecast.getStatus());
+
+      // Connect to receiver
+      document.getElementById('connect-btn').addEventListener('click', async () => {
+        try {
+          await chromecast.connectToReceiver();
+          console.log('Connected:', chromecast.isConnected());
+        } catch (error) {
+          console.error('Connection error:', error);
+        }
+      });
+      /*
+      // Request screen info
+      document.getElementById('request-info-btn').addEventListener('click', async () => {
+        await chromecast.requestScreenInfo({ customData: 'Hello Receiver' });
+        console.log('Screen Info:', chromecast.getScreenInfo());
+      });
+
+      // Stop casting
+      document.getElementById('stop-btn').addEventListener('click', async () => {
+        await chromecast.stopCasting();
+        console.log('Casting stopped');
+      });*/
+    }
+
+    // Clean up when the page is unloaded
+    window.addEventListener('beforeunload', () => {
+      chromecast.cleanup();
+    });
 
     const addInput = document.querySelector('.addInput');
     const theInputcontainer = document.querySelector('.theInputcontainer');
@@ -49,29 +79,7 @@ const uiClicks = () => {
     castButton.addEventListener('click', async () => {
       const inputUrls = document.querySelectorAll('input[type=text]');
       const urls = Array.from(inputUrls).map(input => input.value);
-
-      console.log(urls);
-      // Use methods
-      try {
-        await chromecast.connectToReceiver();
-        await chromecast.requestScreenInfo(urls);
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    });
-
-    // Initialize and get cleanup function
-    const cleanup = chromecast.initialize();
-    console.log(cleanup);
-    // Subscribe to state changes
-    chromecast.subscribe('status', status => {
-      if (status === 'Connected to Chromecast') {
-        console.log('Status changed:', status);
-      }
-    });
-
-    chromecast.subscribe('isConnected', isConnected => {
-      console.log('Connection status:', isConnected);
+      await chromecast.requestScreenInfo(urls);
     });
   });
 };
