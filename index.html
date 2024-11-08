@@ -66,7 +66,6 @@
         const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
         let castSession = null;
         let castContext = null;
-        let sessionListener = null;
         let debugLog = [];
 
         function log(message, type = 'info') {
@@ -104,7 +103,6 @@
             container.innerHTML = html;
         }
 
-        // Initialize Cast API when it becomes available
         window['__onGCastApiAvailable'] = function(isAvailable, error) {
             log(`Cast API Available: ${isAvailable}${error ? ', Error: ' + error : ''}`);
             if (isAvailable) {
@@ -118,40 +116,35 @@
             try {
                 log('Initializing Cast API...');
                 
-                // Initialize Cast context
-                castContext = cast.framework.CastContext.getInstance();
-                
-                // Enable debug logging
-                cast.framework.CastContext.getInstance().setLoggerLevel(
-                    cast.framework.LoggerLevel.DEBUG);
-
-                // Configure Cast options
+                // Initialize Cast context with options
                 const options = {
                     receiverApplicationId: APP_ID,
                     autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
                     language: 'en-US',
                     resumeSavedSession: false
                 };
+
                 log('Setting cast options: ' + JSON.stringify(options));
+                castContext = cast.framework.CastContext.getInstance();
                 castContext.setOptions(options);
 
-                // Add listeners for cast state changes
+                // Add cast state listener
                 castContext.addEventListener(
                     cast.framework.CastContextEventType.CAST_STATE_CHANGED,
                     event => {
                         log('Cast State Changed: ' + event.castState);
                         switch (event.castState) {
                             case cast.framework.CastState.NO_DEVICES_AVAILABLE:
-                                updateStatus('No Chromecast devices found. Please make sure your Chromecast is powered on and connected to the same network.', 'warning');
+                                updateStatus('No Chromecast devices found', 'warning');
                                 break;
                             case cast.framework.CastState.NOT_CONNECTED:
-                                updateStatus('Ready to connect to Chromecast', 'success');
+                                updateStatus('Ready to connect', 'success');
                                 break;
                             case cast.framework.CastState.CONNECTING:
-                                updateStatus('Connecting to Chromecast...', 'info');
+                                updateStatus('Connecting...', 'info');
                                 break;
                             case cast.framework.CastState.CONNECTED:
-                                updateStatus('Connected to Chromecast', 'success');
+                                updateStatus('Connected', 'success');
                                 break;
                         }
                     }
@@ -167,14 +160,11 @@
                 );
 
                 log('Cast API initialization complete');
-                updateStatus('Cast API initialized successfully', 'success');
+                updateStatus('Ready to connect', 'success');
 
                 // Check initial cast state
                 const initialCastState = castContext.getCastState();
                 log('Initial Cast State: ' + initialCastState);
-                if (initialCastState === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
-                    updateStatus('No Chromecast devices found. Please make sure your Chromecast is powered on and connected to the same network.', 'warning');
-                }
 
             } catch (error) {
                 log('Cast API initialization error: ' + error.message, 'error');
@@ -201,9 +191,8 @@
                     break;
                     
                 case cast.framework.SessionState.SESSION_START_FAILED:
-                    const error = castContext.getError();
-                    log('Session start failed. Error: ' + JSON.stringify(error), 'error');
-                    updateStatus('Failed to start session: ' + (error ? error.message : 'Unknown error'), 'error');
+                    log('Session start failed', 'error');
+                    updateStatus('Failed to start session', 'error');
                     updateButtonStates(false);
                     break;
             }
@@ -234,12 +223,10 @@
             updateStatus('Connecting to Chromecast...');
             
             try {
-                // Check if Cast API is available
                 if (!castContext) {
                     throw new Error('Cast API not initialized');
                 }
 
-                // Check current cast state
                 const currentCastState = castContext.getCastState();
                 log('Current Cast State: ' + currentCastState);
                 
@@ -247,7 +234,6 @@
                     throw new Error('No Chromecast devices found');
                 }
 
-                // Request session
                 await castContext.requestSession();
                 log('Session request successful');
                 
