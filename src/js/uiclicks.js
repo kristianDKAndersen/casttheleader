@@ -1,8 +1,17 @@
 import UrlSanitizer from './utils/UrlSanitizer.js';
+
+import { ChromecastManager } from './ChromecastManager';
+
 const uiClicks = () => {
   document.addEventListener('DOMContentLoaded', () => {
+    const chromecast = new ChromecastManager();
+    // Initialize and get cleanup function
+    chromecast.initialize();
+
     const addInput = document.querySelector('.addInput');
     const theInputcontainer = document.querySelector('.theInputcontainer');
+
+    const castButton = document.getElementById('castButton');
 
     const inputField = `
             <div class="addremovewrap" style="width:100%;">
@@ -35,6 +44,34 @@ const uiClicks = () => {
           //console.log(url);
         });
       }
+    });
+
+    castButton.addEventListener('click', async () => {
+      const inputUrls = document.querySelectorAll('input[type=text]');
+      const urls = Array.from(inputUrls).map(input => input.value);
+
+      console.log(urls);
+      // Use methods
+      try {
+        await chromecast.connectToReceiver();
+        await chromecast.requestScreenInfo(urls);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    });
+
+    // Initialize and get cleanup function
+    const cleanup = chromecast.initialize();
+    console.log(cleanup);
+    // Subscribe to state changes
+    chromecast.subscribe('status', status => {
+      if (status === 'Connected to Chromecast') {
+        console.log('Status changed:', status);
+      }
+    });
+
+    chromecast.subscribe('isConnected', isConnected => {
+      console.log('Connection status:', isConnected);
     });
   });
 };
