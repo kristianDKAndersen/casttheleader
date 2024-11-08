@@ -8,6 +8,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2022,
+        cast: 'readonly',
+        chrome: 'readonly',
       },
       ecmaVersion: 'latest',
       sourceType: 'module',

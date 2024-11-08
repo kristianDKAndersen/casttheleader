@@ -1,101 +1,151 @@
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color-scheme: light dark;
-  color: rgb(255 255 255 / 0.87);
-  background-color: #242424;
+  --black: 0 0 0;
+  --white: 255 255 255;
+  --sg-blue: 0 34 53;
+  --sg-bright-blue: 64 102 241;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+/* CSS RESET */
+
+/*
+    Remove all the styles of the "User-Agent-Stylesheet", except for the 'display' property
+    - The "symbol *" part is to solve Firefox SVG sprite bug
+    - The "html" attribute is exclud, because otherwise a bug in Chrome breaks the CSS hyphens property (https://github.com/elad2412/the-new-css-reset/issues/36)
+ */
+*:where(:not(html, iframe, canvas, img, svg, video, audio, svg *, symbol *)) {
+  all: unset;
+  display: revert;
 }
 
-a:hover {
-  color: #535bf2;
+/* Preferred box-sizing value 
+ Set the sizing of an element to include it's border */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
+
+/* reset margin padding to 0 */
+* {
+  padding: 0;
+  margin: 0;
+}
+
+body,
+html {
+  width: 100%;
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+/* CSS RESET END */
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  background-color: rgb(var(--sg-blue));
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100vh;
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
 }
 
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #f7df1eaa);
+.theUicontainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  width: 100%;
+  padding: 1rem;
 }
 
-.card {
-  padding: 2em;
+.theInputcontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
 }
 
-.read-the-docs {
-  color: #888;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+.btn {
+  padding: 0.5rem;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  background: white;
   cursor: pointer;
-  transition: border-color 0.25s;
 }
 
-button:hover {
-  border-color: #646cff;
+.addremovewrap {
+  display: flex;
+  color: white;
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-evenly;
 }
 
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.addremovewrap p {
+  margin: 0 1rem;
+  user-select: none; /* Safari */
+  user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #fff;
-  }
+.addremove {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  color: black;
+  width: 2rem;
+  height: 2rem;
+  font-weight: bolder;
+  border-radius: 100%;
+  border-radius: 100%;
+  border-radius: 100%;
+  border-radius: 100%;
+  border-radius: 100%;
+  cursor: pointer;
+  user-select: none; /* Safari */
+  user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
 
-  a:hover {
-    color: #747bff;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
+input[type='text'] {
+  font-size: 0.9em;
+  padding: 0.5rem;
+  width: 83.3333%;
+  background-color: white;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: black;
 }
