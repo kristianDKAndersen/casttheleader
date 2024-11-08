@@ -1,64 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Chromecast Sender</title>
-    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chromecast Webpage Sender</title>
+    <script src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 </head>
 <body>
-    <h1>Chromecast Sender</h1>
-    <button id="castButton">Connect to Chromecast</button>
-    <button id="sendButton" disabled>Send "Hello"</button>
-
+    <h1>Chromecast Webpage Sender</h1>
+    <button id="castButton" disabled>Cast Webpage to Chromecast</button>
+    <button id="searchDevices" disabled>Search for Devices</button>
+    <button id="checkStatus">Check Cast Status</button>
+    <input type="text" id="urlInput" placeholder="Enter URL to cast" value="https://www.example.com">
+    <div id="status"></div>
     <script>
-        const applicationId = 'ED052386';
-        let castSession = null;
+        const receiverId = '64F29018'; // Make sure this is correct!
+        let castSession;
 
-        window.__onGCastApiAvailable = function(isAvailable) {
+        window['__onGCastApiAvailable'] = function(isAvailable) {
             if (isAvailable) {
-                initializeCastApi();
+                initializeOldCastApi();
+            } else {
+                updateStatus('Cast API is not available');
             }
         };
 
-        function initializeCastApi() {
-            const context = cast.framework.CastContext.getInstance();
-            context.setOptions({
-                receiverApplicationId: applicationId,
-                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
-
-            const castButton = document.getElementById('castButton');
-            castButton.addEventListener('click', async () => {
-                try {
-                    castSession = await context.requestSession();
-                    document.getElementById('sendButton').disabled = false;
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            });
-
-            document.getElementById('sendButton').addEventListener('click', sendMessage);
+        function initializeOldCastApi() {
+            updateStatus('Initializing old Cast API...');
+            var sessionRequest = new chrome.cast.SessionRequest(receiverId);
+            var apiConfig = new chrome.cast.ApiConfig(sessionRequest,
+                sessionListener,
+                receiverListener,
+                chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED);
+            chrome.cast.initialize(apiConfig, onInitSuccess, onInitError);
         }
 
-        function sendMessage() {
-            if (castSession) {
-                const message = 'hello';
-                const namespace = 'urn:x-cast:com.example.message';
-                
-                // Get the cast message channel
-                const channel = castSession.loadMedia 
-                    ? castSession
-                    : castSession.getSessionObj();
+        function sessionListener(session) {
+            updateStatus('Session listener called');
+            castSession = session;
+        }
 
-                channel.sendMessage(namespace, message)
-                    .then(() => {
-                        console.log('Message sent successfully');
-                    })
-                    .catch((error) => {
-                        console.error('Error sending message:', error);
-                    });
+        function receiverListener(availability) {
+            updateStatus('Receiver listener called. Availability: ' + availability);
+            document.getElementById('searchDevices').disabled = false;
+        }
+
+        function onInitSuccess() {
+            updateStatus('Old Cast API initialized successfully');
+            document.getElementById('castButton').disabled = false;
+            document.getElementById('checkStatus').disabled = false;
+        }
+
+        function onInitError(error) {
+            updateStatus('Error initializing old Cast API: ' + JSON.stringify(error));
+        }
+
+        document.getElementById('searchDevices').addEventListener('click', () => {
+            updateStatus('Manually searching for Chromecast devices...');
+            chrome.cast.requestSession(
+                (session) => {
+                    updateStatus('Device found and session created!');
+                    castSession = session;
+                },
+                (error) => {
+                    updateStatus('Error finding devices: ' + JSON.stringify(error));
+                }
+            );
+        });
+
+        document.getElementById('castButton').addEventListener('click', () => {
+            updateStatus('Requesting cast session...');
+            if (castSession && castSession.status === 'connected') {
+                sendMessage();
             } else {
-                console.error('No active session');
+                chrome.cast.requestSession(
+                    (session) => {
+                        castSession = session;
+                        sendMessage();
+                    },
+                    (error) => {
+                        console.error('Detailed error:', error);
+                        updateStatus('Error: ' + error.code + ' - ' + error.description);
+                    }
+                );
             }
+        });
+
+        document.getElementById('checkStatus').addEventListener('click', () => {
+            updateStatus('Checking Cast API status...');
+            if (chrome.cast && chrome.cast.isAvailable) {
+                updateStatus('Cast API is available');
+                chrome.cast.requestSession(
+                    (session) => {
+                        updateStatus('Session created successfully');
+                        castSession = session;
+                    },
+                    (error) => {
+                        updateStatus('Error creating session: ' + JSON.stringify(error));
+                    }
+                );
+            } else {
+                updateStatus('Cast API is not available');
+            }
+        });
+
+        function sendMessage() {
+            updateStatus('Session established. Sending URL...');
+            let url = document.getElementById('urlInput').value;
+            let message = { type: 'LOAD', url: url };
+            castSession.sendMessage('urn:x-cast:com.example.customnamespace', message).then(
+                () => updateStatus('Message sent successfully')
+            ).catch(
+                (error) => updateStatus('Error sending message: ' + JSON.stringify(error))
+            );
+        }
+
+        function updateStatus(message) {
+            console.log(message);
+            document.getElementById('status').innerText += '\n' + message;
         }
     </script>
 </body>

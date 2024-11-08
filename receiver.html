@@ -1,33 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Chromecast Receiver</title>
-    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chromecast Webpage Receiver</title>
+    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <style>
+        body, html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #content {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
 </head>
 <body>
-    <h1 id="message" style="font-size: 48px; text-align: center; margin-top: 100px;">Waiting for message...</h1>
-
+    <iframe id="content"></iframe>
     <script>
         const context = cast.framework.CastReceiverContext.getInstance();
-        const options = new cast.framework.CastReceiverOptions();
-        options.customNamespaces = {
-            'urn:x-cast:com.example.message': cast.framework.system.MessageType.STRING
-        };
+        const playerManager = context.getPlayerManager();
 
-        context.addCustomMessageListener('urn:x-cast:com.example.message', (event) => {
-            const message = event.data;
-            if (message === 'hello') {
-                document.getElementById('message').textContent = 'World';
-                // Send response back to sender
-                event.senderId && context.sendCustomMessage(
-                    'urn:x-cast:com.example.message',
-                    event.senderId,
-                    'world'
-                );
+        // Custom message channel
+        context.addCustomMessageListener('urn:x-cast:com.example.customnamespace', function(event) {
+            console.log('Received message:', event.data);
+            if (event.data.type === 'LOAD' && event.data.url) {
+                document.getElementById('content').src = event.data.url;
             }
         });
 
-        context.start(options);
+        // Start the receiver
+        context.start();
     </script>
 </body>
 </html>
