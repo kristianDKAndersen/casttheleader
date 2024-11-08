@@ -1,6 +1,6 @@
 // chromecast.js
 
-export function Chromecast() {
+const chromeCast = () => {
   const APP_ID = '64F29018';
   const NAMESPACE = 'urn:x-cast:com.custom.message';
 
@@ -53,6 +53,8 @@ export function Chromecast() {
 
   // Request screen information
   const requestScreenInfo = async data => {
+    console.log('Requesting screen info:', data);
+
     if (!castSession) {
       status = 'Not connected to Chromecast';
       return;
@@ -126,4 +128,5 @@ export function Chromecast() {
     stopCasting,
     cleanup,
   };
-}
+};
+export { chromeCast };

@@ -1,10 +1,10 @@
 import UrlSanitizer from './utils/UrlSanitizer.js';
 
-import { Chromecast } from './chromecast.js';
+import { chromeCast } from './chromecast.js';
 
 const uiClicks = () => {
   document.addEventListener('DOMContentLoaded', () => {
-    const chromecast = Chromecast();
+    const chromecast = chromeCast();
     // Check if Chromecast is available
 
     if (chromecast.isAvailable()) {
@@ -77,8 +77,10 @@ const uiClicks = () => {
     });
 
     castButton.addEventListener('click', async () => {
+      console.log('castButton clicked');
       const inputUrls = document.querySelectorAll('input[type=text]');
       const urls = Array.from(inputUrls).map(input => input.value);
+      await chromecast.connectToReceiver();
       await chromecast.requestScreenInfo(urls);
     });
   });
