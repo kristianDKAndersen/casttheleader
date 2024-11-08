@@ -1,0 +1,9 @@
+[alias]
+    # Start a commit message with the task ID
+    task = "!f() { git commit -m \"[DK-$1] $2\"; }; f"
+    
+    # If you're currently working on DK-2813, set it as default
+    task-set = "!f() { git config --local task.current \"$1\"; }; f"
+    
+    # Commit using the currently set task
+    tc = "!f() { TASK=$(git config --local task.current); git commit -m \"[DK-$TASK] $1\"; }; f"
