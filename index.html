@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Improved Test Sender</title>
+    <title>Screen Info Sender</title>
     <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
     <style>
-        body { 
-            font-family: Arial; 
-            margin: 20px; 
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
             background: #f5f5f5;
         }
-        .step {
-            margin: 20px 0;
-            padding: 15px;
+        .control-panel {
             background: white;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
         button {
             padding: 10px 20px;
@@ -28,141 +28,114 @@
         button:disabled {
             background: #ccc;
         }
-        #log {
-            font-family: monospace;
+        #status, #screenInfo {
             padding: 15px;
-            margin-top: 20px;
+            margin: 10px 0;
             background: white;
-            border-radius: 8px;
-            height: 200px;
-            overflow-y: auto;
+            border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #screenInfo {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .info-item {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
         }
     </style>
 </head>
 <body>
-    <h1>Cast Test</h1>
-
-    <div class="step">
-        <h3>Step 1: Initialize</h3>
-        <button onclick="initializeCastApi()">Initialize Cast API</button>
+    <div class="control-panel">
+        <h2>Screen Info Cast Controller</h2>
+        <button onclick="connectToReceiver()">Connect to Chromecast</button>
+        <button onclick="requestScreenInfo()">Get Screen Info</button>
+        <button onclick="stopCasting()">Stop Casting</button>
     </div>
-
-    <div class="step">
-        <h3>Step 2: Check Status</h3>
-        <button onclick="checkCastStatus()">Check Cast Status</button>
-        <button onclick="testDefaultReceiver()">Test Default Receiver</button>
-    </div>
-
-    <div class="step">
-        <h3>Step 3: Connect</h3>
-        <button onclick="requestSession()">Connect to Custom Receiver</button>
-    </div>
-
-    <div id="log"></div>
+    
+    <div id="status">Not connected</div>
+    <div id="screenInfo"></div>
 
     <script>
         const APP_ID = '64F29018';
+        const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
         let castSession = null;
 
-        function log(message) {
+        function updateStatus(message) {
             console.log(message);
-            const logDiv = document.getElementById('log');
-            const time = new Date().toLocaleTimeString();
-            logDiv.innerHTML = `${time}: ${message}<br>` + logDiv.innerHTML;
+            document.getElementById('status').textContent = message;
         }
 
-        // Initialize when Cast API is available
+        function displayScreenInfo(info) {
+            const container = document.getElementById('screenInfo');
+            let html = '<h3>Screen Information:</h3>';
+            
+            Object.entries(info).forEach(([key, value]) => {
+                html += `<div class="info-item">${key}: ${value}</div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
         window['__onGCastApiAvailable'] = function(isAvailable) {
-            log(`Cast API available: ${isAvailable}`);
-            if (isAvailable) {
-                initializeCastApi();
-            }
+            updateStatus(`Cast API available: ${isAvailable}`);
+            if (isAvailable) initializeCastApi();
         };
 
         function initializeCastApi() {
-            try {
-                log('Initializing Cast API...');
+            cast.framework.CastContext.getInstance().setOptions({
+                receiverApplicationId: APP_ID,
+                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
 
-                // Initialize using Chrome Cast API
-                const sessionRequest = new chrome.cast.SessionRequest(APP_ID);
-                const apiConfig = new chrome.cast.ApiConfig(
-                    sessionRequest,
-                    sessionListener,
-                    receiverListener,
-                    chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-                );
-
-                chrome.cast.initialize(apiConfig,
-                    () => log('Cast API initialized successfully'),
-                    error => log('Cast API initialization error: ' + error.description)
-                );
-
-            } catch (error) {
-                log('Error initializing Cast API: ' + error.message);
-            }
-        }
-
-        function sessionListener(session) {
-            castSession = session;
-            log('New session ID: ' + session.sessionId);
-        }
-
-        function receiverListener(availability) {
-            log('Receiver availability: ' + availability);
-        }
-
-        function checkCastStatus() {
-            if (!chrome.cast || !chrome.cast.isAvailable) {
-                log('Chrome Cast is not available');
-                return;
-            }
-
-            const state = chrome.cast.ReceiverAvailability;
-            log('Cast API Status:');
-            log('- API Available: Yes');
-            log('- Extension Loaded: ' + (!!window.chrome.cast));
-            log('- Current State: ' + (state || 'Unknown'));
-        }
-
-        function requestSession() {
-            log('Requesting session...');
-            chrome.cast.requestSession(
-                function(session) {
-                    castSession = session;
-                    log('Session created successfully');
-                },
-                function(error) {
-                    log('Failed to create session: ' + error.description);
-                    log('Error code: ' + error.code);
+            // Add session listener
+            cast.framework.CastContext.getInstance().addEventListener(
+                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+                event => {
+                    if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
+                        castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+                        updateStatus('Connected to Chromecast');
+                        // Request screen info immediately after connection
+                        requestScreenInfo();
+                    }
                 }
             );
         }
 
-        function testDefaultReceiver() {
-            try {
-                log('Testing default receiver...');
-                const sessionRequest = new chrome.cast.SessionRequest('64F29018');
-                const apiConfig = new chrome.cast.ApiConfig(
-                    sessionRequest,
-                    sessionListener,
-                    receiverListener,
-                    chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-                );
+        function connectToReceiver() {
+            updateStatus('Connecting to Chromecast...');
+            cast.framework.CastContext.getInstance().requestSession()
+                .catch(error => updateStatus(`Connection failed: ${error.message}`));
+        }
 
-                chrome.cast.initialize(apiConfig,
-                    () => {
-                        log('Default receiver initialized');
-                        chrome.cast.requestSession(
-                            session => log('Default receiver session created'),
-                            error => log('Default receiver error: ' + error.description)
-                        );
-                    },
-                    error => log('Default receiver init error: ' + error.description)
-                );
+        function requestScreenInfo() {
+            if (!castSession) {
+                updateStatus('Not connected to Chromecast');
+                return;
+            }
 
-            } catch (error) {
-                log('Error testing default receiver: ' + error.message);
+            castSession.sendMessage(NAMESPACE, { command: 'getScreenInfo' })
+                .then(() => updateStatus('Screen info requested'))
+                .catch(error => updateStatus(`Error requesting screen info: ${error.message}`));
+
+            // Add listener for response
+            castSession.addMessageListener(NAMESPACE, (namespace, message) => {
+                if (message.type === 'screenInfo') {
+                    displayScreenInfo(message.data);
+                }
+            });
+        }
+
+        function stopCasting() {
+            if (castSession) {
+                castSession.endSession(true)
+                    .then(() => {
+                        updateStatus('Casting stopped');
+                        castSession = null;
+                        document.getElementById('screenInfo').innerHTML = '';
+                    })
+                    .catch(error => updateStatus(`Error stopping cast: ${error.message}`));
             }
         }
     </script>
