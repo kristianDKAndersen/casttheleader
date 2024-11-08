@@ -1,182 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Screen Info Receiver</title>
+    <title>Final Test Receiver</title>
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <style>
         body {
-            background-color: #1a1a1a;
-            color: #fff;
-            font-family: monospace;
+            background-color: #0000FF;
+            color: white;
+            font-family: Arial;
+            font-size: 24px;
             margin: 0;
             padding: 20px;
             overflow: hidden;
         }
-        #container {
-            background: rgba(0, 0, 0, 0.8);
+        #debug {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
             padding: 20px;
             border-radius: 8px;
-            max-width: 800px;
-            margin: 20px auto;
-        }
-        .info-section {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-        .info-title {
-            color: #4CAF50;
-            margin-bottom: 5px;
-        }
-        .info-value {
-            color: #fff;
-            margin-left: 20px;
-        }
-        #debugOutput {
-            margin-top: 20px;
-            padding: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 12px;
-            color: #888;
+            max-width: 90%;
+            word-wrap: break-word;
         }
     </style>
 </head>
 <body>
-    <div id="container">
-        <h2>Screen Information</h2>
-        <div id="screenInfo"></div>
-        <div id="debugOutput"></div>
-    </div>
+    <div id="debug">Starting...</div>
 
     <script>
-        const debugOutput = document.getElementById('debugOutput');
-        const screenInfo = document.getElementById('screenInfo');
+        const debug = document.getElementById('debug');
+        const startTime = Date.now();
 
         function log(message) {
-            console.log(message);
-            debugOutput.innerHTML = `${new Date().toLocaleTimeString()}: ${message}<br>` + debugOutput.innerHTML;
-        }
-
-        function getScreenInfo() {
-            const info = {
-                // Screen dimensions
-                screenWidth: window.screen.width,
-                screenHeight: window.screen.height,
-                screenAvailWidth: window.screen.availWidth,
-                screenAvailHeight: window.screen.availHeight,
-                screenColorDepth: window.screen.colorDepth,
-                screenPixelDepth: window.screen.pixelDepth,
-                
-                // Window dimensions
-                windowInnerWidth: window.innerWidth,
-                windowInnerHeight: window.innerHeight,
-                windowOuterWidth: window.outerWidth,
-                windowOuterHeight: window.outerHeight,
-                
-                // Device pixel ratio
-                devicePixelRatio: window.devicePixelRatio,
-                
-                // Document dimensions
-                documentWidth: document.documentElement.clientWidth,
-                documentHeight: document.documentElement.clientHeight,
-                
-                // Media query information
-                isFullHD: window.matchMedia('(min-width: 1920px)').matches,
-                is4K: window.matchMedia('(min-width: 3840px)').matches,
-                
-                // Additional screen properties
-                orientation: screen.orientation ? screen.orientation.type : 'unknown',
-                refreshRate: screen.refreshRate || 'unknown'
-            };
-
-            return info;
-        }
-
-        function updateScreenInfoDisplay() {
-            const info = getScreenInfo();
-            let html = '';
-
-            // Screen Section
-            html += `<div class="info-section">
-                <div class="info-title">Screen Dimensions:</div>
-                <div class="info-value">Width: ${info.screenWidth}px</div>
-                <div class="info-value">Height: ${info.screenHeight}px</div>
-                <div class="info-value">Available Width: ${info.screenAvailWidth}px</div>
-                <div class="info-value">Available Height: ${info.screenAvailHeight}px</div>
-                <div class="info-value">Color Depth: ${info.screenColorDepth} bits</div>
-                <div class="info-value">Pixel Depth: ${info.screenPixelDepth} bits</div>
-            </div>`;
-
-            // Window Section
-            html += `<div class="info-section">
-                <div class="info-title">Window Dimensions:</div>
-                <div class="info-value">Inner Width: ${info.windowInnerWidth}px</div>
-                <div class="info-value">Inner Height: ${info.windowInnerHeight}px</div>
-                <div class="info-value">Outer Width: ${info.windowOuterWidth}px</div>
-                <div class="info-value">Outer Height: ${info.windowOuterHeight}px</div>
-            </div>`;
-
-            // Display Properties
-            html += `<div class="info-section">
-                <div class="info-title">Display Properties:</div>
-                <div class="info-value">Device Pixel Ratio: ${info.devicePixelRatio}</div>
-                <div class="info-value">Orientation: ${info.orientation}</div>
-                <div class="info-value">Refresh Rate: ${info.refreshRate}Hz</div>
-                <div class="info-value">Full HD (1920x1080): ${info.isFullHD ? 'Yes' : 'No'}</div>
-                <div class="info-value">4K (3840x2160): ${info.is4K ? 'Yes' : 'No'}</div>
-            </div>`;
-
-            screenInfo.innerHTML = html;
-            return info;
+            const time = ((Date.now() - startTime) / 1000).toFixed(1);
+            const logMessage = `[${time}s] ${message}`;
+            console.log(logMessage);
+            debug.innerHTML = logMessage + '<br>' + debug.innerHTML;
         }
 
         function initializeReceiver() {
             try {
                 log('Initializing receiver...');
+
+                // Get the context
                 const context = cast.framework.CastReceiverContext.getInstance();
-                
-                // Set debug level
+
+                // Set maximum debug level
                 context.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
-                // Add message listener
-                context.addCustomMessageListener('urn:x-cast:com.screeninfo.app', event => {
-                    log('Message received: ' + JSON.stringify(event.data));
-                    if (event.data.command === 'getScreenInfo') {
-                        const info = updateScreenInfoDisplay();
-                        // Send screen info back to sender
-                        context.sendCustomMessage('urn:x-cast:com.screeninfo.app', 
-                            event.senderId, 
-                            { type: 'screenInfo', data: info }
-                        );
-                    }
+                // Configure options
+                const options = new cast.framework.CastReceiverOptions({
+                    customNamespaces: {
+                        'urn:x-cast:com.custom.message': cast.framework.system.MessageType.STRING
+                    },
+                    disableIdleTimeout: true,
+                    skipPlaybackOnError: false
                 });
 
-                // Start receiver
-                context.start();
-                log('Receiver started');
-                
-                // Initial screen info update
-                updateScreenInfoDisplay();
-
-                // Update screen info when window is resized
-                window.addEventListener('resize', () => {
-                    log('Window resized, updating screen info');
-                    updateScreenInfoDisplay();
+                // Add system event listeners
+                context.addEventListener(cast.framework.system.EventType.READY, () => {
+                    log('READY - System is ready');
                 });
+
+                context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
+                    log('CONNECTED - Sender connected: ' + event.senderId);
+                });
+
+                context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
+                    log('DISCONNECTED - Sender disconnected: ' + event.senderId);
+                });
+
+                context.addEventListener(cast.framework.system.EventType.ERROR, event => {
+                    log('ERROR - ' + JSON.stringify({
+                        code: event.errorCode,
+                        reason: event.reason,
+                        customData: event.customData
+                    }));
+                });
+
+                context.addEventListener(cast.framework.system.EventType.SHUTDOWN, () => {
+                    log('SHUTDOWN - Receiver shutting down');
+                });
+
+                // Add custom message listener
+                context.addCustomMessageListener('urn:x-cast:com.custom.message', event => {
+                    log('MESSAGE - From sender: ' + event.senderId);
+                    log('DATA - ' + JSON.stringify(event.data));
+                });
+
+                // Start the receiver
+                log('Starting receiver...');
+                context.start(options);
+                log('Receiver started and waiting for connection');
 
             } catch (error) {
-                log('Error: ' + error.message);
-                console.error(error);
+                log('CRITICAL ERROR: ' + error.message);
+                console.error('Full error:', error);
             }
         }
 
-        // Initialize when loaded
-        if (cast && cast.framework) {
-            initializeReceiver();
-        } else {
-            log('Cast API not available');
-        }
+        // Initialize when the page loads
+        window.addEventListener('load', () => {
+            if (cast && cast.framework) {
+                initializeReceiver();
+            } else {
+                log('ERROR: Cast API not available');
+            }
+        });
     </script>
 </body>
 </html>
