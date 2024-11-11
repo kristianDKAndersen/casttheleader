@@ -1,150 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Screen Info Sender</title>
-    <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f5f5f5;
-        }
-        .control-panel {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            background: #4285f4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:disabled {
-            background: #ccc;
-        }
-        #status, #screenInfo {
-            padding: 15px;
-            margin: 10px 0;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        #screenInfo {
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-        .info-item {
-            margin: 5px 0;
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cast the leader</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+ <link rel="stylesheet" href="src/css/style.css">
+ <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
 </head>
-<body>
-    <div class="control-panel">
-        <h2>Screen Info Cast Controller</h2>
-        <button onclick="connectToReceiver()">Connect to Chromecast</button>
-        <button onclick="requestScreenInfo()">Get Screen Info</button>
-        <button onclick="stopCasting()">Stop Casting</button>
-    </div>
-    
-    <div id="status">Not connected</div>
-    <div id="screenInfo"></div>
-
-    <script>
-        const APP_ID = '64F29018';
-        const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
-        let castSession = null;
-
-        function updateStatus(message) {
-            console.log(message);
-            document.getElementById('status').textContent = message;
-        }
-
-        function displayScreenInfo(info) {
-            console.log('Screen info:', info);
-            const container = document.getElementById('screenInfo');
-            let html = '<h3>Screen Information:</h3>';
+<body class="bg-SG_Blue">
+    <div id="app" data-v-app="">
+        <main class="mx-auto flex h-full w-full flex-col items-center p-5">
+            <h1 class="text-white font-bold text-lg">Cast The leader</h1>
+            <h2 class="statusTxt text-white font-bold text-lg">Cast API....</h2>
             
-            Object.entries(info).forEach(([key, value]) => {
-                html += `<div class="info-item">${key}: ${value}</div>`;
-            });
-            
-            container.innerHTML = html;
-        }
+            <section class="flex flex-row w-full justify-evenly mt-2 mb-2 ">
+                
+                <div class="flex flex-row text-white items-center ">
+                    <div role="button" class="addremove addInput rounded-full bg-white w-8 h-8 text-center text-black flex justify-center items-center font-bold mt-2 mb-2"> + </div>
+                    <p class="ms-2">Add URL'S</p>
+                    </div>
+                    
+                    <div role="button" id="castButton" class="relative addremove bg-white text-black p-2 rounded-lg mt-2 ">
+                        <p>Connect to Cast</p>
+                    </div>
+                    <div role="button" id="stopcastButton" class="relative addremove bg-white text-black p-2 rounded-lg mt-2 ">
+                        <p>Stop to Cast</p>
+                    </div>
+                    
+            </section>
+                    
+                    
+                    <section class="flex flex-col w-full theInputcontainer">
+                            
+                            <!--<div class="flex flex-row justify-evenly items-center" style="order: 1;">
+                                <input type="url" class="m-1 border bg-white rounded-lg p-2 w-5/6" placeholder="Enter URL (e.g., example.com)"  url="" data-id="index">
+                                <div role="button" class="addremove rounded-full bg-white w-8 h-8 text-center text-black flex justify-center items-center font-bold"> - </div>
+                            </div>-->
+                        </section>
+                        
+                        <section class="flex flex-row w-full justify-between "></section>
 
-        window['__onGCastApiAvailable'] = function(isAvailable) {
-            updateStatus(`Cast API available: ${isAvailable}`);
-            if (isAvailable) initializeCastApi();
-        };
+                    </section></main></div>
 
-        function initializeCastApi() {
-            cast.framework.CastContext.getInstance().setOptions({
-                receiverApplicationId: APP_ID,
-                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
+  
 
-            // Add session listener
-            cast.framework.CastContext.getInstance().addEventListener(
-                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-                event => {
-                    if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
-                        castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-                        updateStatus('Connected to Chromecast');
-                        // Request screen info immediately after connection
-                        //requestScreenInfo();
-                    }
-                }
-            );
-        }
 
-        function connectToReceiver() {
-            updateStatus('Connecting to Chromecast...');
-            cast.framework.CastContext.getInstance().requestSession()
-                .catch(error => updateStatus(`Connection failed: ${error.message}`));
-        }
-
-        function requestScreenInfo() {
-            if (!castSession) {
-                updateStatus('Not connected to Chromecast');
-                return;
-            }
-
-            castSession.sendMessage(NAMESPACE, { command: 'getScreenInfo' })
-                .then(() => updateStatus('Screen info requested'))
-                .catch(error => updateStatus(`Error requesting screen info: ${error.message}`));
-
-            // Add listener for response
-            castSession.addMessageListener(NAMESPACE, (namespace, message) => {
-                console.log('Message received:', message);
-                if (message.type === 'screenInfo') {
-                    displayScreenInfo(message.data);
-                }
-            });
-
-                // Add an event listener to the defined namespace channel
-                castSession.addMessageListener("namespace", (namespace, message) => {
-                console.log(namespace, message);
-                });
-        }
-
-        function stopCasting() {
-            if (castSession) {
-                castSession.endSession(true)
-                    .then(() => {
-                        updateStatus('Casting stopped');
-                        castSession = null;
-                        document.getElementById('screenInfo').innerHTML = '';
-                    })
-                    .catch(error => updateStatus(`Error stopping cast: ${error.message}`));
-            }
-        }
-    </script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>

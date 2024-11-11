@@ -1,47 +1,31 @@
 import UrlSanitizer from './utils/UrlSanitizer.js';
 
-import { chromeCast } from './chromecast.js';
+import {
+  initializeChromecast,
+  cleanupChromecast,
+  connectToReceiver,
+  requestScreenInfo,
+  stopCasting,
+  getStatus,
+} from './useChromeCast.js';
 
 const uiClicks = () => {
   document.addEventListener('DOMContentLoaded', () => {
-    const chromecast = chromeCast();
-    // Check if Chromecast is available
+    const statusTxt = document.querySelector('.statusTxt');
 
-    if (chromecast.isAvailable()) {
-      console.log(chromecast.getStatus());
+    initializeChromecast();
 
-      // Connect to receiver
-      document.getElementById('connect-btn').addEventListener('click', async () => {
-        try {
-          await chromecast.connectToReceiver();
-          console.log('Connected:', chromecast.isConnected());
-        } catch (error) {
-          console.error('Connection error:', error);
-        }
-      });
-      /*
-      // Request screen info
-      document.getElementById('request-info-btn').addEventListener('click', async () => {
-        await chromecast.requestScreenInfo({ customData: 'Hello Receiver' });
-        console.log('Screen Info:', chromecast.getScreenInfo());
-      });
+    statusTxt.innerHTML = getStatus();
 
-      // Stop casting
-      document.getElementById('stop-btn').addEventListener('click', async () => {
-        await chromecast.stopCasting();
-        console.log('Casting stopped');
-      });*/
-    }
-
-    // Clean up when the page is unloaded
     window.addEventListener('beforeunload', () => {
-      chromecast.cleanup();
+      cleanupChromecast();
     });
 
     const addInput = document.querySelector('.addInput');
     const theInputcontainer = document.querySelector('.theInputcontainer');
 
     const castButton = document.getElementById('castButton');
+    const stopcastButton = document.getElementById('stopcastButton');
 
     const inputField = `
             <div class="addremovewrap" style="width:100%;">
@@ -80,8 +64,22 @@ const uiClicks = () => {
       console.log('castButton clicked');
       const inputUrls = document.querySelectorAll('input[type=text]');
       const urls = Array.from(inputUrls).map(input => input.value);
-      await chromecast.connectToReceiver();
-      await chromecast.requestScreenInfo(urls);
+      try {
+        await connectToReceiver().then(requestScreenInfo(urls));
+        statusTxt.innerHTML = getStatus();
+      } catch (error) {
+        console.error('Error connecting:', error);
+      }
+    });
+
+    stopcastButton.addEventListener('click', async () => {
+      console.log('stopcastButton clicked');
+      try {
+        await stopCasting();
+        statusTxt.innerHTML = getStatus();
+      } catch (error) {
+        console.error('Error stopping cast:', error);
+      }
     });
   });
 };
