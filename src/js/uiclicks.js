@@ -65,8 +65,12 @@ const uiClicks = () => {
       const inputUrls = document.querySelectorAll('input[type=text]');
       const urls = Array.from(inputUrls).map(input => input.value);
       try {
-        await connectToReceiver().then(requestScreenInfo(urls));
+        await connectToReceiver();
         statusTxt.innerHTML = getStatus();
+
+        if (getStatus() === 'Connected to Chromecast') {
+          requestScreenInfo(urls);
+        }
       } catch (error) {
         console.error('Error connecting:', error);
       }
