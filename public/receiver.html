@@ -471,7 +471,13 @@ const scaler = new IframeScaler({
                     const getScreenInfo = event.data.command;
                     const data = event.data.data;
                     
+                    addiframes(data)
+
+
                     if (getScreenInfo === 'getScreenInfo') {
+
+                    
+
                         log('Sending screen info back to sender');
                         const info = data;
 
