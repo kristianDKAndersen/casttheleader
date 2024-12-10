@@ -364,7 +364,7 @@ const scaler = new IframeScaler({
 
         const addiframes = (urls) => {
             
-
+            console.log(urls+'from sender')
       
 
             const iframewrapper = document.getElementById('iframewrapper');
@@ -438,9 +438,10 @@ const scaler = new IframeScaler({
                     log('SHUTDOWN - Receiver shutting down');
                 });
 
-            
+           
 
                 // Add message listener
+                /*
                 context.addCustomMessageListener(NAMESPACE, event => {
                     log('Message received: ' + JSON.stringify(event.data));
                     
@@ -463,8 +464,34 @@ const scaler = new IframeScaler({
                     }else{
                         log(getScreenInfo + ' is not a valid command')
                     }
+                });*/
+                context.addCustomMessageListener(NAMESPACE, event => {
+                    log('Message received: ' + JSON.stringify(event.data));
+                    
+                    const getScreenInfo = event.data.command;
+                    const data = event.data.data;
+                    
+                    if (getScreenInfo === 'getScreenInfo') {
+                        log('Sending screen info back to sender');
+                        const info = data;
+
+                        context.sendCustomMessage(NAMESPACE, event.senderId, {
+                            'type': 'screenInfo',
+                            'data': info
+                        });
+                    } 
+                    else if (getScreenInfo === 'heartbeat') {
+                        log('Heartbeat received, sending response');
+                        // Send back current screen info as response
+                        context.sendCustomMessage(NAMESPACE, event.senderId, {
+                            'type': 'screenInfo',
+                            'data': data || []  // Use empty array if no data available
+                        });
+                    }
+                    else {
+                        log(getScreenInfo + ' is not a valid command')
+                    }
                 });
-           
                 // Start the receiver
                 log('Starting receiver...');
                 context.start(options);
