@@ -175,7 +175,7 @@ class IframeScaler {
             // Add load event listener to debug loading issues
             this.iframe.onload = () => {
                 log('iframe loaded successfully');
-                document.getElementById('debug').style.display = 'none';
+               // document.getElementById('debug').style.display = 'none';
             };
             
             this.iframe.onerror = (error) => {

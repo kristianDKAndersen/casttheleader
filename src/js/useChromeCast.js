@@ -72,9 +72,9 @@ export const requestScreenInfo = async data => {
 
 const startHeartbeat = () => {
   // Send heartbeat every 4 minutes
-  heartbeatInterval = setInterval(() => {
-    const funnydata = new Date().toISOString();
-    castSession.sendMessage(NAMESPACE, { command: 'heartbeat', funnydata });
+  const dummydata = ['bib', 'bub', 'bob'];
+  heartbeatInterval = setInterval(async () => {
+    await castSession.sendMessage(NAMESPACE, { command: 'heartbeat', dummydata });
   }, 240000); // 4 minutes
 };
 
