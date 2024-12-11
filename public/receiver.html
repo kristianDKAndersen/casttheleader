@@ -478,7 +478,7 @@ class IframeSlideshow {
                         log('Heartbeat received, sending response');
                         // Send back current screen info as response
                         context.sendCustomMessage(NAMESPACE, event.senderId, {
-                            'type': 'screenInfo',
+                            'type': 'heartbeat',
                             'data': data || []  // Use empty array if no data available
                         });
                     }
