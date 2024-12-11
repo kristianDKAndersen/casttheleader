@@ -175,10 +175,12 @@ class IframeScaler {
             // Add load event listener to debug loading issues
             this.iframe.onload = () => {
                 log('iframe loaded successfully');
+                document.getElementById('debug').style.display = 'none';
             };
             
             this.iframe.onerror = (error) => {
                error('iframe loading error:', error);
+             
             };
             
         } catch (error) {
@@ -334,21 +336,7 @@ class IframeSlideshow {
         });
     }
 }
-// Usage example:
-/*
-const urls = [
-    'https://example1.com',
-    'https://example2.com',
-    'https://example3.com'
-];
 
-
-*/
-/*
-const scaler = new IframeScaler({
-    targetWidth: 2500,
-    targetHeight: 1400
-});*/
 
         const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
         const debug = document.getElementById('debug');
