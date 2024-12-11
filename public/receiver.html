@@ -399,6 +399,9 @@ class IframeSlideshow {
                     disableIdleTimeout: true,
                     skipPlaybackOnError: false
                 });
+                
+                // Extend idle timeout
+                options.maxInactivity = 3600;
 
                 // Add system event listeners
                 context.addEventListener(cast.framework.system.EventType.READY, () => {
