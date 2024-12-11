@@ -9,7 +9,7 @@ let screenInfo = null;
 let isConnected = false;
 let isAvailable = false;
 let pollInterval;
-let heartbeatInterval = null;
+//let heartbeatInterval = null;
 
 // Initialize Cast API when it becomes available
 const initializeCastApi = () => {
@@ -62,14 +62,14 @@ export const requestScreenInfo = async data => {
       const data = JSON.parse(message);
       console.log('Data received from receiver:', data);
       screenInfo = data.data;
-      startHeartbeat();
+      //startHeartbeat();
     });
   } catch (error) {
     status = `Error requesting screen info: ${error.message}`;
     throw error;
   }
 };
-
+/*
 const startHeartbeat = () => {
   // Send heartbeat every 4 minutes
   const dummydata = ['bib', 'bub', 'bob'];
@@ -84,7 +84,7 @@ const stopHeartbeat = () => {
     heartbeatInterval = null;
   }
 };
-
+*/
 // Stop casting
 export const stopCasting = async () => {
   if (castSession) {
@@ -94,7 +94,6 @@ export const stopCasting = async () => {
       castSession = null;
       screenInfo = null;
       isConnected = false;
-      stopHeartbeat();
     } catch (error) {
       status = `Error stopping cast: ${error.message}`;
       throw error;
