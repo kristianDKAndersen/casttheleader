@@ -443,15 +443,26 @@ class IframeSlideshow {
                     // Load the silent audio
                     playerManager.load(mediaInfo);
                     playerManager.play();
-                    
+
                     // Optional: Add event listener to reload if playback ends
+                    
                     playerManager.addEventListener(
+                    cast.framework.events.EventType.MEDIA_STATUS, (event) => {
+                       log('keepAlive EVENT:'+event);
+                       playerManager.load(mediaInfo);
+                       log('restart keepAlive');
+                       
+                    // Write your own event handling code, for example
+                    // using the event.mediaStatus value
+                });
+
+                    /*playerManager.addEventListener(
                         cast.framework.events.EventType.MEDIA_FINISHED,
                         () => {
                             playerManager.load(mediaInfo);
                             log('restart keepAlive');
                         }
-                    );
+                    );*/
                 }
                 // Add message listener
                 /*
