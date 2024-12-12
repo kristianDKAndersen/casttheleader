@@ -426,6 +426,8 @@ class IframeSlideshow {
 
            
                 function keepAlive() {
+                    
+                    log('Before fetch silence file');
 
                     fetch('./silence15.mp3')
                     .then(response => {
@@ -532,9 +534,8 @@ class IframeSlideshow {
                 // Start the receiver
                 log('Starting receiver...');
                 context.start(options);
-                keepAlive();
                 log('Receiver started and waiting for connection');
-
+                keepAlive();
             } catch (error) {
                 log('CRITICAL ERROR: ' + error.message);
                 console.error('Full error:', error);
