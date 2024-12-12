@@ -436,12 +436,13 @@ class IframeSlideshow {
                     // Set up the media information
                     const mediaInfo = new cast.framework.messages.MediaInformation();
                     mediaInfo.contentId = silentAudio;
-                    mediaInfo.contentType = 'audio/wav';
+                    mediaInfo.contentType = 'audio/mpeg';
                     mediaInfo.streamType = cast.framework.messages.StreamType.LIVE;
                     mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
                     
                     // Load the silent audio
                     playerManager.load(mediaInfo);
+                    playerManager.play();
                     
                     // Optional: Add event listener to reload if playback ends
                     playerManager.addEventListener(
