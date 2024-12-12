@@ -5,7 +5,6 @@ import {
   cleanupChromecast,
   connectToReceiver,
   requestScreenInfo,
-  sendHeartbeat,
   stopCasting,
   getStatus,
 } from './useChromeCast.js';
@@ -81,9 +80,11 @@ const uiClicks = () => {
 
         if (getStatus() === 'Connected to Chromecast') {
           requestScreenInfo(urls);
+          /*
           setInterval(() => {
             sendHeartbeat('heartbeat Sent');
           }, 15000);
+          */
         }
       } catch (error) {
         console.error('Error connecting:', error);

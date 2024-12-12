@@ -389,6 +389,24 @@ class IframeSlideshow {
                 const context = cast.framework.CastReceiverContext.getInstance();
                 const playerManager = context.getPlayerManager();
 
+
+                /*debug overlay*/
+                const castDebugLogger = cast.debug.CastDebugLogger.getInstance();
+
+
+                    context.addEventListener(cast.framework.system.EventType.READY, () => {
+                    if (!castDebugLogger.debugOverlayElement_) {
+                        // Enable debug logger and show a 'DEBUG MODE' overlay at top left corner.
+                        castDebugLogger.setEnabled(true);
+                        // Show debug overlay
+                        castDebugLogger.showDebugLogs(true);
+                        // Clear log messages on debug overlay
+                        castDebugLogger.clearDebugLogs();
+                    }
+                    });
+
+
+
                 // Set maximum debug level
                 context.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
@@ -640,6 +658,8 @@ class IframeSlideshow {
         });
     </script>
         <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+                <!-- Cast Debug Logger -->
+        <script src="//www.gstatic.com/cast/sdk/libs/devtools/debug_layer/caf_receiver_logger.js"></script>
 
 </body>
 </html>
