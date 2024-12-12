@@ -85,7 +85,7 @@ const uiClicks = () => {
           requestScreenInfo(urls);
           setInterval(() => {
             sendHeartbeat('heartbeat Sent');
-          }, 30000);
+          }, 15000);
         }
       } catch (error) {
         console.error('Error connecting:', error);

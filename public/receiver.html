@@ -387,6 +387,7 @@ class IframeSlideshow {
 
                 // Get the context
                 const context = cast.framework.CastReceiverContext.getInstance();
+                const playerManager = context.getPlayerManager();
 
                 // Set maximum debug level
                 context.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
@@ -424,7 +425,35 @@ class IframeSlideshow {
                     log('SHUTDOWN - Receiver shutting down');
                 });
 
-           
+                context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, (event) => {
+                    log('Sender disconnected');
+                    keepAliveState.isPlaying = false;
+                });
+
+                playerManager.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, () => {
+                    log('Media finished, restarting keep-alive');
+                    keepAliveState.isPlaying = false;
+                });
+
+                playerManager.addEventListener(cast.framework.events.EventType.ERROR, (event) => {
+                    log('Media error: ' + JSON.stringify(event));
+                    keepAliveState.isPlaying = false;
+                });
+                    
+     
+        const setupKeepAlive=()=> {
+            const silentAudio = './silence15.mp3';
+            const mediaInfo = new cast.framework.messages.MediaInformation();
+            mediaInfo.contentId = silentAudio;
+            mediaInfo.contentType = 'audio/mpeg';
+            mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
+            mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
+            
+            return { mediaInfo, isPlaying: false };
+        }
+
+        let keepAliveState = setupKeepAlive();
+                /*      
                 function keepAlive() {
     log('keepAlive started');
     const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
@@ -511,7 +540,7 @@ class IframeSlideshow {
             loadAndPlay();
         }
     }, 240000);
-}
+}*/
 
 
 
@@ -561,12 +590,29 @@ class IframeSlideshow {
                         });
                     } 
                     else if (getScreenInfo === 'heartbeat') {
-                        log('Heartbeat received, sending response');
-                        // Send back current screen info as response
-                        context.sendCustomMessage(NAMESPACE, event.senderId, {
-                            'type': 'heartbeat',
-                            'data': data || []  // Use empty array if no data available
-                        });
+                        
+                        if (getScreenInfo === 'heartbeat') {
+                            log('Heartbeat received, sending response');
+                            
+                            // Ensure media is playing when heartbeat is received
+                            if (!keepAliveState.isPlaying) {
+                                playerManager.load(keepAliveState.mediaInfo)
+                                    .then(() => {
+                                        playerManager.play();
+                                        keepAliveState.isPlaying = true;
+                                        log('Keep-alive media started');
+                                    })
+                                    .catch(error => {
+                                        log('Error starting keep-alive media: ' + error);
+                                    });
+                            }
+
+                            // Send response back to sender
+                            context.sendCustomMessage(NAMESPACE, event.senderId, {
+                                'type': 'heartbeat',
+                                'data': data || []
+                            });
+                        }
                     }
                     else {
                         log(getScreenInfo + ' is not a valid command')

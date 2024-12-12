@@ -77,22 +77,23 @@ export const sendHeartbeat = async data => {
   }
 
   try {
-    await cast.framework.CastContext.getInstance()
-      .getCurrentSession()
-      .sendMessage(NAMESPACE, { command: 'heartbeat', data });
-    console.log('Heartbeat sent');
-    status = 'sending heartbeat';
+    const session = cast.framework.CastContext.getInstance().getCurrentSession();
+    if (!session) {
+      status = 'No active session';
+      return;
+    }
 
-    // Add listener for response if not already added
-    castSession.addMessageListener(NAMESPACE, (namespace, message) => {
-      console.log('Message received from receiver:', message);
-      const data = JSON.parse(message);
-      console.log('Data received from receiver:', data);
-      screenInfo = data.data;
+    await session.sendMessage(NAMESPACE, {
+      command: 'heartbeat',
+      data,
+      timestamp: Date.now(), // Add timestamp for tracking
     });
+
+    console.log('Heartbeat sent at:', new Date().toISOString());
+    status = 'sending heartbeat';
   } catch (error) {
-    status = `Error requesting screen info: ${error.message}`;
-    throw error;
+    status = `Error sending heartbeat: ${error.message}`;
+    console.error('Heartbeat error:', error);
   }
 };
 
