@@ -395,7 +395,7 @@ class IframeSlideshow {
                 const options = new cast.framework.CastReceiverOptions();
                 options.disableIdleTimeout = true; // No timeout
                 options.maxInactivity = 36000000; // 10 hour
-                options.setPastFramesNumber(1);
+               
                
 
                 // Add system event listeners
@@ -406,6 +406,13 @@ class IframeSlideshow {
 
                 context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
                     log('CONNECTED - Sender connected: ' + event.senderId);
+
+                    const player = new cast.framework.PlayerManager();
+    const mediaInfo = new cast.framework.messages.MediaInformation();
+    mediaInfo.contentId = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Silent 1px audio
+    mediaInfo.contentType = 'audio/wav';
+    mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
+    player.load(mediaInfo);
                 });
 
                 context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
