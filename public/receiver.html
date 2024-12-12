@@ -395,15 +395,7 @@ class IframeSlideshow {
                 const options = new cast.framework.CastReceiverOptions();
                 options.disableIdleTimeout = true; // No timeout
                 options.maxInactivity = 36000000; // 10 hour
-                
-                /*const options = new cast.framework.CastReceiverOptions({
-                    customNamespaces: {
-                        'urn:x-cast:com.custom.message': cast.framework.system.MessageType.STRING
-                    },
-                    skipPlaybackOnError: false
-                });*/
-                
-                // Extend idle timeout
+                options.setPastFramesNumber(1);
                
 
                 // Add system event listeners
@@ -465,12 +457,10 @@ class IframeSlideshow {
                     const getScreenInfo = event.data.command;
                     const data = event.data.data;
                     
-                    addiframes(data)
-
-
+                
                     if (getScreenInfo === 'getScreenInfo') {
 
-                    
+                        addiframes(data)
 
                         log('Sending screen info back to sender');
                         const info = data;
@@ -492,6 +482,7 @@ class IframeSlideshow {
                         log(getScreenInfo + ' is not a valid command')
                     }
                 });
+
                 // Start the receiver
                 log('Starting receiver...');
                 context.start(options);
