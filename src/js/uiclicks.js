@@ -5,9 +5,9 @@ import {
   cleanupChromecast,
   connectToReceiver,
   requestScreenInfo,
+  sendHeartbeat,
   stopCasting,
   getStatus,
-  getIsConnected,
 } from './useChromeCast.js';
 
 const uiClicks = () => {
@@ -66,15 +66,6 @@ const uiClicks = () => {
       }
     });
 
-    const sendHeartbeat = () => {
-      if (getIsConnected()) {
-        const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-        if (castSession) {
-          castSession.sendMessage('urn:x-cast:com.custom.message', { type: 'heartbeat' });
-        }
-      }
-    };
-
     // Send a heartbeat every 30 seconds
 
     window.addEventListener('beforeunload', () => {
@@ -92,7 +83,7 @@ const uiClicks = () => {
 
         if (getStatus() === 'Connected to Chromecast') {
           requestScreenInfo(urls);
-          heartbeatInterval = setInterval(sendHeartbeat, 30000);
+          sendHeartbeat('heartbeat started');
         }
       } catch (error) {
         console.error('Error connecting:', error);

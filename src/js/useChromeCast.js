@@ -69,22 +69,33 @@ export const requestScreenInfo = async data => {
     throw error;
   }
 };
-/*
-const startHeartbeat = () => {
-  // Send heartbeat every 4 minutes
-  const dummydata = ['bib', 'bub', 'bob'];
-  heartbeatInterval = setInterval(async () => {
-    await castSession.sendMessage(NAMESPACE, { command: 'heartbeat', dummydata });
-  }, 240000); // 4 minutes
-};
 
-const stopHeartbeat = () => {
-  if (this.heartbeatInterval) {
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = null;
+export const sendHeartbeat = async data => {
+  if (!castSession) {
+    status = 'Not connected to Chromecast';
+    return;
+  }
+
+  try {
+    await cast.framework.CastContext.getInstance()
+      .getCurrentSession()
+      .sendMessage(NAMESPACE, { command: 'heartbeat', data });
+    console.log('Heartbeat sent');
+    status = 'sending heartbeat';
+
+    // Add listener for response if not already added
+    castSession.addMessageListener(NAMESPACE, (namespace, message) => {
+      console.log('Message received from receiver:', message);
+      const data = JSON.parse(message);
+      console.log('Data received from receiver:', data);
+      screenInfo = data.data;
+    });
+  } catch (error) {
+    status = `Error requesting screen info: ${error.message}`;
+    throw error;
   }
 };
-*/
+
 // Stop casting
 export const stopCasting = async () => {
   if (castSession) {

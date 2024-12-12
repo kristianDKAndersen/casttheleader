@@ -577,7 +577,7 @@ class IframeSlideshow {
                 log('Starting receiver...');
                 context.start(options);
                 log('Receiver started and waiting for connection');
-                keepAlive();
+               // keepAlive();
             } catch (error) {
                 log('CRITICAL ERROR: ' + error.message);
                 console.error('Full error:', error);
