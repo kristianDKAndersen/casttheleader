@@ -445,6 +445,18 @@ class IframeSlideshow {
             .catch(error => {
                 log('Error loading audio: ' + error);
             });
+
+            const audio = new Audio(silentAudio);
+    audio.loop = true;
+    audio.volume = 0; // Ensure it's inaudible
+
+    audio.play()
+        .then(() => {
+            log('Silent audio playback started via Audio object');
+        })
+        .catch(error => {
+            log('Error playing silent audio via Audio object: ' + error);
+        });
     }
 
     // Initial load
