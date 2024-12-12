@@ -426,6 +426,20 @@ class IframeSlideshow {
 
            
                 function keepAlive() {
+
+                    fetch('./silence15.mp3')
+                    .then(response => {
+                        if (response.ok) {
+                            log('Silence file is accessible');
+                        } else {
+                            log('Silence file not found');
+                        }
+                    })
+                    .catch(error => {
+                        log('Error accessing silence file: ' + error);
+                    });
+
+
                     log('keepAlive');
                     // Get the PlayerManager instance
                     const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
