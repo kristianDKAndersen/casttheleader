@@ -426,54 +426,84 @@ class IframeSlideshow {
 
            
                 function keepAlive() {
-                    
-                    log('Before fetch silence file');
+    log('keepAlive started');
+    const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
+    const silentAudio = './silence15.mp3';
+    
+    const mediaInfo = new cast.framework.messages.MediaInformation();
+    mediaInfo.contentId = silentAudio;
+    mediaInfo.contentType = 'audio/mpeg';
+    mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED; // Changed from LIVE to BUFFERED
+    mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
+    
+    function loadAndPlay() {
+        playerManager.load(mediaInfo)
+            .then(() => {
+                playerManager.play();
+                log('Audio loaded and playing');
+            })
+            .catch(error => {
+                log('Error loading audio: ' + error);
+            });
+    }
 
-                    fetch('./silence15.mp3')
-                    .then(response => {
-                        if (response.ok) {
-                            log('Silence file is accessible');
-                        } else {
-                            log('Silence file not found');
-                        }
-                    })
-                    .catch(error => {
-                        log('Error accessing silence file: ' + error);
-                    });
+    // Initial load
+    loadAndPlay();
+
+    // Listen for multiple relevant events
+    playerManager.addEventListener(
+        cast.framework.events.EventType.MEDIA_FINISHED, 
+        () => {
+            log('Media finished event');
+            loadAndPlay();
+        }
+    );
+
+    playerManager.addEventListener(
+        cast.framework.events.EventType.ENDED, 
+        () => {
+            log('Media ended event');
+            loadAndPlay();
+        }
+    );
+
+    playerManager.addEventListener(
+        cast.framework.events.EventType.ERROR, 
+        (event) => {
+            log('Player Error: ' + JSON.stringify(event));
+            loadAndPlay();
+        }
+    );
+
+    // Add state change monitoring
+    playerManager.addEventListener(
+        cast.framework.events.EventType.MEDIA_STATUS, 
+        (event) => {
+            const state = playerManager.getPlayerState();
+            log('Player state changed to: ' + state);
+            
+            if (state === cast.framework.messages.PlayerState.IDLE || 
+                state === cast.framework.messages.PlayerState.ENDED) {
+                log('Restarting due to IDLE/ENDED state');
+                loadAndPlay();
+            }
+        }
+    );
+
+    // Backup periodic check every 5 seconds
+    setInterval(() => {
+        const state = playerManager.getPlayerState();
+        if (state === cast.framework.messages.PlayerState.IDLE || 
+            state === cast.framework.messages.PlayerState.ENDED) {
+            log('Interval check: Restarting playback');
+            loadAndPlay();
+        }
+    }, 5000);
+}
 
 
-                    log('keepAlive');
-                    // Get the PlayerManager instance
-                    const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
-                    
-                    // Create a silent audio file as a data URI
-                    const silentAudio = './silence15.mp3';
-                    
-                    // Set up the media information
-                    const mediaInfo = new cast.framework.messages.MediaInformation();
-                    mediaInfo.contentId = silentAudio;
-                    mediaInfo.contentType = 'audio/mpeg';
-                    mediaInfo.streamType = cast.framework.messages.StreamType.LIVE;
-                    mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
-                    
-                    // Load the silent audio
-                    playerManager.load(mediaInfo);
-                    playerManager.play();
 
-                    // Optional: Add event listener to reload if playback ends
-                    
-                    playerManager.addEventListener(
-                    cast.framework.events.EventType.MEDIA_FINISHED, (event) => {
-                       log('keepAlive EVENT:'+event);
-                       playerManager.load(mediaInfo);
-                       log('restart keepAlive');
-                       
-                    // Write your own event handling code, for example
-                    // using the event.mediaStatus value
-                });
-
-                 
-                }
+                
                 // Add message listener
                 /*
                 context.addCustomMessageListener(NAMESPACE, event => {
