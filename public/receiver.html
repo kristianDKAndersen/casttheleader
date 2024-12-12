@@ -443,7 +443,7 @@ castDebugLogger.loggerLevelByEvents = {
 if (!castDebugLogger.loggerLevelByTags) {
     castDebugLogger.loggerLevelByTags = {};
 }
-
+cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 castDebugLogger.loggerLevelByTags[LOG_RECEIVER_TAG] = cast.framework.LoggerLevel.DEBUG;
 
 
@@ -522,123 +522,7 @@ castDebugLogger.loggerLevelByTags[LOG_RECEIVER_TAG] = cast.framework.LoggerLevel
         }
 
         let keepAliveState = setupKeepAlive();
-                /*      
-                function keepAlive() {
-    log('keepAlive started');
-    const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
-    const silentAudio = './silence.mp3';
-    
-    const mediaInfo = new cast.framework.messages.MediaInformation();
-    mediaInfo.contentId = silentAudio;
-    mediaInfo.contentType = 'audio/mpeg';
-    mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED; // Changed from LIVE to BUFFERED
-    mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
-    
-    function loadAndPlay() {
-        playerManager.load(mediaInfo)
-            .then(() => {
-                playerManager.play();
-                log('Audio loaded and playing');
-            })
-            .catch(error => {
-                log('Error loading audio: ' + error);
-            });
-
-            const audio = new Audio(silentAudio);
-    audio.loop = true;
-    audio.volume = 0; // Ensure it's inaudible
-
-    audio.play()
-        .then(() => {
-            log('Silent audio playback started via Audio object');
-        })
-        .catch(error => {
-            log('Error playing silent audio via Audio object: ' + error);
-        });
-    }
-
-    // Initial load
-    loadAndPlay();
-
-    // Listen for multiple relevant events
-    playerManager.addEventListener(
-        cast.framework.events.EventType.MEDIA_FINISHED, 
-        () => {
-            log('Media finished event');
-            loadAndPlay();
-        }
-    );
-
-    playerManager.addEventListener(
-        cast.framework.events.EventType.ENDED, 
-        () => {
-            log('Media ended event');
-            loadAndPlay();
-        }
-    );
-
-    playerManager.addEventListener(
-        cast.framework.events.EventType.ERROR, 
-        (event) => {
-            log('Player Error: ' + JSON.stringify(event));
-            loadAndPlay();
-        }
-    );
-
-    // Add state change monitoring
-    playerManager.addEventListener(
-        cast.framework.events.EventType.MEDIA_STATUS, 
-        (event) => {
-            const state = playerManager.getPlayerState();
-            log('Player state changed to: ' + state);
-            
-            if (state === cast.framework.messages.PlayerState.IDLE || 
-                state === cast.framework.messages.PlayerState.ENDED) {
-                log('Restarting due to IDLE/ENDED state');
-                loadAndPlay();
-            }
-        }
-    );
-
-    // Backup periodic check every 4minutes
-    setInterval(() => {
-        const state = playerManager.getPlayerState();
-        if (state === cast.framework.messages.PlayerState.IDLE || 
-            state === cast.framework.messages.PlayerState.ENDED) {
-            log('Interval check: Restarting playback');
-            loadAndPlay();
-        }
-    }, 240000);
-}*/
-
-
-
-                
-                // Add message listener
-                /*
-                context.addCustomMessageListener(NAMESPACE, event => {
-                    log('Message received: ' + JSON.stringify(event.data));
-                    
-                    const getScreenInfo = event.data.command;
-                    const data =event.data.data;
-                    
-                    addiframes(data)
-
-                    if (getScreenInfo === 'getScreenInfo') {
-                       log('Sending screen info back to sender');
-                        const info = data;
-        
-                        // Send screen info back to the specific sender
-                        context.sendCustomMessage(NAMESPACE, event.senderId, {
-                            'type': 'screenInfo',
-                            'data': info
-                        });
-
-                      
-                    }else{
-                        log(getScreenInfo + ' is not a valid command')
-                    }
-                });*/
+               
                 context.addCustomMessageListener(NAMESPACE, event => {
                     log('Message received: ' + JSON.stringify(event.data));
                     
@@ -708,9 +592,11 @@ castDebugLogger.loggerLevelByTags[LOG_RECEIVER_TAG] = cast.framework.LoggerLevel
             }
         });
     </script>
-        <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-                <!-- Cast Debug Logger -->
-        <script src="//www.gstatic.com/cast/sdk/libs/devtools/debug_layer/caf_receiver_logger.js"></script>
+
+        <!-- Web Receiver SDK -->
+        <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+        <!-- Cast Debug Logger -->
+<script src="//www.gstatic.com/cast/sdk/libs/devtools/debug_layer/caf_receiver_logger.js"></script>
 
 </body>
 </html>
