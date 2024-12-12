@@ -396,7 +396,7 @@ class IframeSlideshow {
                 const options = new cast.framework.CastReceiverOptions();
                 options.disableIdleTimeout = true; // No timeout
                 options.maxInactivity = 36000000; // 10 hour
-               
+                context.setInactivityTimeout(36000)
                
 
                 // Add system event listeners

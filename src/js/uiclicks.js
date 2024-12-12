@@ -44,7 +44,7 @@ const uiClicks = () => {
       theInputcontainer.insertAdjacentHTML('afterbegin', inputField);
     });
 
-    // Use event delegation for remove buttons
+    // remove buttons
     theInputcontainer.addEventListener('click', e => {
       if (e.target.classList.contains('removeInput')) {
         e.target.closest('.addremovewrap').remove();
@@ -65,8 +65,6 @@ const uiClicks = () => {
         });
       }
     });
-
-    // Send a heartbeat every 30 seconds
 
     window.addEventListener('beforeunload', () => {
       cleanupChromecast();
