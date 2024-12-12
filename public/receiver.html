@@ -502,7 +502,7 @@ class IframeSlideshow {
         }
     );
 
-    // Backup periodic check every 5 seconds
+    // Backup periodic check every 4minutes
     setInterval(() => {
         const state = playerManager.getPlayerState();
         if (state === cast.framework.messages.PlayerState.IDLE || 
@@ -510,7 +510,7 @@ class IframeSlideshow {
             log('Interval check: Restarting playback');
             loadAndPlay();
         }
-    }, 10000);
+    }, 240000);
 }
 
 
