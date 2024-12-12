@@ -396,12 +396,11 @@ class IframeSlideshow {
                     customNamespaces: {
                         'urn:x-cast:com.custom.message': cast.framework.system.MessageType.STRING
                     },
-                    disableIdleTimeout: true,
                     skipPlaybackOnError: false
                 });
                 
                 // Extend idle timeout
-                options.maxInactivity = 3600;
+                options.disableIdleTimeout = true; // No timeout
 
                 // Add system event listeners
                 context.addEventListener(cast.framework.system.EventType.READY, () => {
