@@ -83,7 +83,9 @@ const uiClicks = () => {
 
         if (getStatus() === 'Connected to Chromecast') {
           requestScreenInfo(urls);
-          sendHeartbeat('heartbeat started');
+          setInterval(() => {
+            sendHeartbeat('heartbeat Sent');
+          }, 30000);
         }
       } catch (error) {
         console.error('Error connecting:', error);
