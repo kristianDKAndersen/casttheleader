@@ -12,6 +12,8 @@ import {
 
 const uiClicks = () => {
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('uiclicks.js loaded');
+
     let heartbeatInterval;
 
     const statusTxt = document.querySelector('.statusTxt');

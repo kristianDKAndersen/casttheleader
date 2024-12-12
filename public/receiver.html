@@ -431,7 +431,7 @@ class IframeSlideshow {
                     const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
                     
                     // Create a silent audio file as a data URI
-                    const silentAudio = './silence15.mp3';
+                    const silentAudio = '../silence15.mp3';
                     
                     // Set up the media information
                     const mediaInfo = new cast.framework.messages.MediaInformation();
@@ -456,13 +456,7 @@ class IframeSlideshow {
                     // using the event.mediaStatus value
                 });
 
-                    /*playerManager.addEventListener(
-                        cast.framework.events.EventType.MEDIA_FINISHED,
-                        () => {
-                            playerManager.load(mediaInfo);
-                            log('restart keepAlive');
-                        }
-                    );*/
+                 
                 }
                 // Add message listener
                 /*
