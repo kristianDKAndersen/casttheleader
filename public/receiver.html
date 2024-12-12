@@ -428,7 +428,7 @@ class IframeSlideshow {
                 function keepAlive() {
     log('keepAlive started');
     const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
-    const silentAudio = './silence15.mp3';
+    const silentAudio = './silence.mp3';
     
     const mediaInfo = new cast.framework.messages.MediaInformation();
     mediaInfo.contentId = silentAudio;
@@ -498,7 +498,7 @@ class IframeSlideshow {
             log('Interval check: Restarting playback');
             loadAndPlay();
         }
-    }, 5000);
+    }, 10000);
 }
 
 
