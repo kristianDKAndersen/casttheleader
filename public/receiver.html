@@ -394,7 +394,6 @@ class IframeSlideshow {
             ;
 
 
-                const LOG_RECEIVER_TAG = 'Receiver';
 
 // Core logging setup
 castDebugLogger.loggerLevelByEvents = {
@@ -440,10 +439,7 @@ castDebugLogger.loggerLevelByEvents = {
     'cast.framework.events.category.FINE': cast.framework.LoggerLevel.FINE
 };
 
-// Set logger level for custom tag
-if (!castDebugLogger.loggerLevelByTags) {
-    castDebugLogger.loggerLevelByTags = {};
-}
+
 
 castDebugLogger.loggerLevelByTags[LOG_RECEIVER_TAG] = cast.framework.LoggerLevel.DEBUG;
 
