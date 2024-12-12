@@ -392,15 +392,19 @@ class IframeSlideshow {
                 context.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
                 // Configure options
-                const options = new cast.framework.CastReceiverOptions({
+                const options = new cast.framework.CastReceiverOptions();
+                options.disableIdleTimeout = true; // No timeout
+                options.maxInactivity = 36000000; // 10 hour
+                
+                /*const options = new cast.framework.CastReceiverOptions({
                     customNamespaces: {
                         'urn:x-cast:com.custom.message': cast.framework.system.MessageType.STRING
                     },
                     skipPlaybackOnError: false
-                });
+                });*/
                 
                 // Extend idle timeout
-                options.disableIdleTimeout = true; // No timeout
+               
 
                 // Add system event listeners
                 context.addEventListener(cast.framework.system.EventType.READY, () => {
