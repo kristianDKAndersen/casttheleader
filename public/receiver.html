@@ -406,13 +406,6 @@ class IframeSlideshow {
 
                 context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
                     log('CONNECTED - Sender connected: ' + event.senderId);
-
-                    const player = new cast.framework.PlayerManager();
-    const mediaInfo = new cast.framework.messages.MediaInformation();
-    mediaInfo.contentId = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Silent 1px audio
-    mediaInfo.contentType = 'audio/wav';
-    mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
-    player.load(mediaInfo);
                 });
 
                 context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
@@ -432,7 +425,33 @@ class IframeSlideshow {
                 });
 
            
-
+                function keepAlive() {
+                    log('keepAlive');
+                    // Get the PlayerManager instance
+                    const playerManager = cast.framework.CastReceiverContext.getInstance().getPlayerManager();
+                    
+                    // Create a silent audio file as a data URI
+                    const silentAudio = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+                    
+                    // Set up the media information
+                    const mediaInfo = new cast.framework.messages.MediaInformation();
+                    mediaInfo.contentId = silentAudio;
+                    mediaInfo.contentType = 'audio/wav';
+                    mediaInfo.streamType = cast.framework.messages.StreamType.LIVE;
+                    mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
+                    
+                    // Load the silent audio
+                    playerManager.load(mediaInfo);
+                    
+                    // Optional: Add event listener to reload if playback ends
+                    playerManager.addEventListener(
+                        cast.framework.events.EventType.MEDIA_FINISHED,
+                        () => {
+                            playerManager.load(mediaInfo);
+                            log('restart keepAlive');
+                        }
+                    );
+                }
                 // Add message listener
                 /*
                 context.addCustomMessageListener(NAMESPACE, event => {
@@ -493,6 +512,7 @@ class IframeSlideshow {
                 // Start the receiver
                 log('Starting receiver...');
                 context.start(options);
+                keepAlive();
                 log('Receiver started and waiting for connection');
 
             } catch (error) {
