@@ -50,11 +50,21 @@ const sender = () => {
     }
   });
 
-  castButton.addEventListener('click', () => {
+  const getUrls = () => {
+    console.log('getUrls called');
+    const inputUrls = document.querySelectorAll('input[type=text]');
+    const urls = Array.from(inputUrls).map(input => input.value);
+
+    console.log('returning urls:', urls);
+
+    return urls;
+  };
+
+  castButton.addEventListener('click', async () => {
     console.log('castButton clicked');
 
     try {
-      cast(getUrls());
+      await cast(getUrls());
     } catch (error) {
       console.error('Error connecting:', error);
     }
@@ -68,13 +78,6 @@ const sender = () => {
       console.error('Error stopping cast:', error);
     }
   });
-
-  const getUrls = () => {
-    const inputUrls = document.querySelectorAll('input[type=text]');
-    const urls = Array.from(inputUrls).map(input => input.value);
-    log(urls);
-    return urls;
-  };
 
   const log = function () {
     console.log(...arguments);
@@ -107,9 +110,10 @@ const sender = () => {
     }
   };
 
-  const cast = function (url, cb) {
+  const cast = function (url) {
     checkApi();
-    log('cast');
+    //log('cast',url);
+
     return new Promise((resolve, reject) => {
       chrome.cast.requestSession(_session => {
         log('has session', _session);
@@ -118,7 +122,7 @@ const sender = () => {
 
         castSession.addMessageListener(NAMESPACE, function (namespace, data) {
           log('received message', data);
-          cb && cb.apply(cb, arguments);
+          // cb && cb.apply(cb, arguments);
         });
         if (url && url[0]) {
           console.log('sending url', url);
@@ -140,13 +144,37 @@ const sender = () => {
   };
 
   const sendMessage = function (obj) {
+    if (!castSession) {
+      console.error('No cast session available');
+      return Promise.reject(new Error('No cast session'));
+    }
+
+    console.log('Attempting to send:', obj);
+    return new Promise((resolve, reject) => {
+      castSession.sendMessage(
+        NAMESPACE,
+        JSON.stringify(obj),
+        () => {
+          console.log('Message sent successfully');
+          resolve(obj);
+        },
+        error => {
+          console.error('Failed to send message:', error);
+          reject(error);
+        }
+      );
+    });
+  };
+
+  /*
+  const sendMessage = function (obj) {
     console.log('sending', obj);
 
     return new Promise((resolve, reject) => {
       log('sending', obj);
       castSession.sendMessage(NAMESPACE, JSON.stringify(obj), () => resolve(obj), reject);
     });
-  };
+  };*/
 
   const update = fn => value => {
     fn(value);
@@ -154,7 +182,9 @@ const sender = () => {
   };
 
   const updateUrl = update(value => {
-    state.url = Array.isArray(value) ? value : [value]; // Ensure it's always an array
+    console.log('Updating URL with:', value);
+    state.url = Array.isArray(value) ? value : [value];
+    console.log('New state:', state);
   });
 
   const checkCastApi = () => {

@@ -1,4 +1,4 @@
-import receiver from '.src/js/receiver.js';
+import receiver from '../src/js/receiver.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   receiver();
