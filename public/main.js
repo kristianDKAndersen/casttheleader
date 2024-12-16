@@ -8,6 +8,7 @@ const log = message => {
 
   debug.innerHTML = `${logMessage}<br>${debug.innerHTML}`;
 };
+
 log('receiver init');
 
 class IframeScaler {
@@ -326,38 +327,32 @@ const update = data => {
     data.url = [].concat(data.url);
     addiframes(data.url);
   }
-  //this.data = Object.assign(this.data, data);
-  //this.reflow();
 };
 
+const getShit = () => ({
+    s: 'fart',
+    h: 'crap',
+    i: 'poop',
+    t: 'shit',
+  });
+
 const setupCast = () => {
-  log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
 
   context.addCustomMessageListener(NAMESPACE, event => {
-    // Check if it's a ping message
-    if (event.data.type === 'ping') {
-      log('Received ping, sending pong');
-      context.sendCustomMessage(NAMESPACE, event.senderId, {
-        type: 'pong',
-        timestamp: Date.now(),
-      });
-      return; // Exit early for ping messages
-    }
-
     update(event.data);
 
     // send something back
     context.sendCustomMessage(NAMESPACE, event.senderId, {
       requestId: event.data.requestId,
-      data: 'data',
+      data: 'somedata',
       event,
+      vp: getShit(),
     });
   });
 
   const options = new cast.framework.CastReceiverOptions();
-  options.disableIdleTimeout = true;
-  options.maxInactivity = 0; // Add this line
+  options.disableIdleTimeout = true; //no timeout
   context.start(options);
 };
 
