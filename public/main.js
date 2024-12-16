@@ -375,7 +375,7 @@ const setupCast = () => {
 
   const options = new cast.framework.CastReceiverOptions();
   options.disableIdleTimeout = true;
-  options.maxInactivity = 0;
+  options.maxInactivity = 0; // Add this line
   context.start(options);
 };
 
