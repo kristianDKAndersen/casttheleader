@@ -1,30 +1,29 @@
 import UrlSanitizer from './utils/UrlSanitizer.js';
+
 const sender = () => {
   const APP_ID = '64F29018';
   const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
-
   let castSession = null;
-
-  let pollInterval;
 
   const state = {
     url: [''],
   };
 
+  // UI Elements
   const addInput = document.querySelector('.addInput');
   const theInputcontainer = document.querySelector('.theInputcontainer');
-
   const castButton = document.getElementById('castButton');
   const stopcastButton = document.getElementById('stopcastButton');
 
+  // UI Setup
   const inputField = `
-            <div class="addremovewrap" style="width:100%;">
-                <input type="text" class="input" placeholder="Enter URL" />
-                <div role="button" class="addremove removeInput"> - </div>
-            </div>
-        `;
+    <div class="addremovewrap" style="width:100%;">
+      <input type="text" class="input" placeholder="Enter URL" />
+      <div role="button" class="addremove removeInput"> - </div>
+    </div>
+  `;
 
-  // Add new input field
+  // UI Event Listeners
   addInput.addEventListener('click', () => {
     theInputcontainer.insertAdjacentHTML('afterbegin', inputField);
   });
@@ -33,148 +32,75 @@ const sender = () => {
     if (e.target.classList.contains('removeInput')) {
       e.target.closest('.addremovewrap').remove();
     }
-
     if (e.target.classList.contains('input')) {
-      e.target.addEventListener('focus', () => {});
-
       e.target.addEventListener('blur', e => {
-        //const url =
         UrlSanitizer(e.target.value);
-        // console.log(url);
-      });
-      e.target.addEventListener('input', e => {
-        // const url =
-        UrlSanitizer(e.target.value);
-        //console.log(url);
       });
     }
   });
 
   const getUrls = () => {
-    console.log('getUrls called');
     const inputUrls = document.querySelectorAll('input[type=text]');
-    const urls = Array.from(inputUrls).map(input => input.value);
-
-    console.log('returning urls:', urls);
-
-    return urls;
+    return Array.from(inputUrls).map(input => input.value);
   };
 
   castButton.addEventListener('click', async () => {
-    console.log('castButton clicked');
-
     try {
       await cast(getUrls());
     } catch (error) {
-      console.error('Error connecting:', error);
+      console.error('Cast error:', error);
     }
   });
 
   stopcastButton.addEventListener('click', () => {
     try {
       stop();
-      console.log('stopcastButton clicked');
     } catch (error) {
-      console.error('Error stopping cast:', error);
+      console.error('Stop error:', error);
     }
   });
 
-  const log = function () {
-    console.log(...arguments);
-  };
-
-  const initializeCastApi = () => {
-    const sessionRequest = new chrome.cast.SessionRequest(APP_ID);
-
-    const apiConfig = new chrome.cast.ApiConfig(
-      sessionRequest,
-      _session => {
-        castSession = _session;
-
-        log('has config', castSession);
-      },
-      receiver => log('has receiver', receiver)
-    );
-    chrome.cast.initialize(
-      apiConfig,
-      () => log('cast init success'),
-      err => log('cast init error', err)
-    );
-  };
-
-  const checkApi = function () {
+  // Core Cast functionality - matching first script's approach
+  const checkApi = () => {
     if (!(chrome && chrome.cast)) {
       console.error(
-        'google cast api not found, please include www.gstatic.com/cv/js/sender/v1/cast_sender.js'
+        'Google Cast API not found, please include www.gstatic.com/cv/js/sender/v1/cast_sender.js'
       );
     }
   };
 
-  const cast = function (url) {
+  const cast = url => {
     checkApi();
-    //log('cast',url);
-
     return new Promise((resolve, reject) => {
       chrome.cast.requestSession(_session => {
-        log('has session', _session);
-
         castSession = _session;
 
-        castSession.addMessageListener(NAMESPACE, function (namespace, data) {
-          log('received message', data);
-          // cb && cb.apply(cb, arguments);
+        castSession.addMessageListener(NAMESPACE, (namespace, data) => {
+          console.log('Received message:', data);
         });
+
         if (url && url[0]) {
-          console.log('sending url', url);
           resolve(updateUrl(url));
         } else {
-          //sending empty message
-          console.log('sending empty message');
-          sendMessage({}).then(() => {
-            resolve();
-          });
+          sendMessage({}).then(resolve);
         }
       }, reject);
     });
   };
 
-  const stop = function () {
-    log('stop');
-    castSession.stop();
-  };
-
-  const sendMessage = function (obj) {
-    if (!castSession) {
-      console.error('No cast session available');
-      return Promise.reject(new Error('No cast session'));
+  const stop = () => {
+    if (castSession) {
+      castSession.stop();
     }
-
-    console.log('Attempting to send:', obj);
-    return new Promise((resolve, reject) => {
-      castSession.sendMessage(
-        NAMESPACE,
-        JSON.stringify(obj),
-        () => {
-          console.log('Message sent successfully');
-          resolve(obj);
-        },
-        error => {
-          console.error('Failed to send message:', error);
-          reject(error);
-        }
-      );
-    });
   };
 
-  /*
-  const sendMessage = function (obj) {
-    console.log('sending', obj);
+  const sendMessage = obj => new Promise((resolve, reject) => {
+      if (!castSession) {
+        return reject(new Error('No active cast session'));
+      }
 
-    return new Promise((resolve, reject) => {
-      log('sending', obj);
       castSession.sendMessage(NAMESPACE, JSON.stringify(obj), () => resolve(obj), reject);
     });
-  };*/
 
   const update = fn => value => {
     fn(value);
@@ -182,33 +108,37 @@ const sender = () => {
   };
 
   const updateUrl = update(value => {
-    console.log('Updating URL with:', value);
     state.url = Array.isArray(value) ? value : [value];
-    console.log('New state:', state);
   });
 
-  const checkCastApi = () => {
-    if (window.__onGCastApiAvailable) {
-      clearInterval(pollInterval);
+  // Initialize Cast API - matching first script's approach
+  const initializeCastApi = () => {
+    const sessionRequest = new chrome.cast.SessionRequest(APP_ID);
+    const apiConfig = new chrome.cast.ApiConfig(
+      sessionRequest,
+      _session => {
+        castSession = _session;
+      },
+      receiverAvailability => {
+        console.log('Receiver availability:', receiverAvailability);
+      }
+    );
 
+    chrome.cast.initialize(
+      apiConfig,
+      () => console.log('Cast API initialized'),
+      error => console.error('Cast API initialization error:', error)
+    );
+  };
+
+  // Initialize when API is available
+  window['__onGCastApiAvailable'] = (loaded, errorInfo) => {
+    if (loaded) {
       initializeCastApi();
     } else {
-      console.log('Cast API not available');
+      console.error('Cast API load error:', errorInfo);
     }
   };
-
-  // Start polling for the Cast API
-  const initializeChromecast = () => {
-    // Poll every 500ms until Cast API is available
-    pollInterval = setInterval(checkCastApi, 500);
-  };
-  /*    
-      // Cleanup function
-     const cleanupChromecast = () => {
-        if (pollInterval) clearInterval(pollInterval);
-      };
-*/
-
-  initializeChromecast();
 };
+
 export default sender;
