@@ -330,17 +330,27 @@ const update = data => {
 };
 
 const getShit = () => ({
-    s: 'fart',
-    h: 'crap',
-    i: 'poop',
-    t: 'shit',
-  });
+  s: 'fart',
+  h: 'crap',
+  i: 'poop',
+  t: 'shit',
+});
 
 const setupCast = () => {
   const context = cast.framework.CastReceiverContext.getInstance();
 
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
+
+    // Check if it's a ping message
+    if (event.data.type === 'ping') {
+      log('Received ping, sending pong');
+      context.sendCustomMessage(NAMESPACE, event.senderId, {
+        type: 'pong',
+        timestamp: Date.now(),
+      });
+      return; // Exit early for ping messages
+    }
 
     // send something back
     context.sendCustomMessage(NAMESPACE, event.senderId, {
