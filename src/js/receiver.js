@@ -33,4 +33,4 @@ const receiver = () => {
   setupCast();
 };
 
-export default receiver;
+receiver();
