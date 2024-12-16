@@ -50,19 +50,19 @@ const sender = () => {
     }
   });
 
-  castButton.addEventListener('click', async () => {
+  castButton.addEventListener('click', () => {
     console.log('castButton clicked');
 
     try {
-      await cast(getUrls());
+      cast(getUrls());
     } catch (error) {
       console.error('Error connecting:', error);
     }
   });
 
-  stopcastButton.addEventListener('click', async () => {
+  stopcastButton.addEventListener('click', () => {
     try {
-      await stop();
+      stop();
       console.log('stopcastButton clicked');
     } catch (error) {
       console.error('Error stopping cast:', error);
