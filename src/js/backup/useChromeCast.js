@@ -20,6 +20,9 @@ const initializeCastApi = () => {
     autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
   });
 
+  // const player = new cast.framework.RemotePlayer();
+  // const playerController = new cast.framework.RemotePlayerController(player);
+
   // Add session listener
   castContext.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, event => {
     if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
