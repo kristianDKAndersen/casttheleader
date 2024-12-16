@@ -4,6 +4,7 @@ const sender = () => {
   const APP_ID = '64F29018';
   const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
   let castSession = null;
+  let pingPong = null;
 
   const state = {
     url: [''],
@@ -75,8 +76,19 @@ const sender = () => {
       chrome.cast.requestSession(_session => {
         castSession = _session;
 
+        // Initialize ping/pong when session starts
+        pingPong = new CastPingPong(castSession);
+        pingPong.startPinging();
+
         castSession.addMessageListener(NAMESPACE, (namespace, data) => {
-          console.log('Received message:', data);
+          // Parse data if it's a string
+          const message = typeof data === 'string' ? JSON.parse(data) : data;
+          console.log('Received message:', message);
+
+          // Handle pong responses
+          if (message.type === 'pong') {
+            pingPong.handlePong(message);
+          }
         });
 
         if (url && url[0]) {
@@ -90,11 +102,75 @@ const sender = () => {
 
   const stop = () => {
     if (castSession) {
+      if (pingPong) {
+        pingPong.stopPinging();
+        pingPong = null;
+      }
       castSession.stop();
     }
   };
 
-  const sendMessage = obj => new Promise((resolve, reject) => {
+  class CastPingPong {
+    constructor(castSession) {
+      this.castSession = castSession;
+      this.NAMESPACE = 'urn:x-cast:com.screeninfo.app'; // Same namespace as receiver
+      this.pingInterval = 5 * 60 * 1000; // Ping every 5 minutes
+      this.pingTimeout = null;
+      this.lastPongTime = Date.now();
+    }
+
+    startPinging() {
+      console.log('Starting ping/pong');
+      // Clear any existing interval
+      if (this.pingTimeout) {
+        clearInterval(this.pingTimeout);
+      }
+
+      // Start sending pings
+      this.pingTimeout = setInterval(() => {
+        this.sendPing();
+      }, this.pingInterval);
+
+      // Send initial ping
+      this.sendPing();
+    }
+
+    stopPinging() {
+      console.log('Stopping ping/pong');
+      if (this.pingTimeout) {
+        clearInterval(this.pingTimeout);
+        this.pingTimeout = null;
+      }
+    }
+
+    sendPing() {
+      if (!this.castSession) {
+        console.warn('No cast session available');
+        return;
+      }
+
+      try {
+        console.log('Sending ping to receiver');
+        this.castSession.sendMessage(this.NAMESPACE, {
+          type: 'ping',
+          timestamp: Date.now(),
+        });
+      } catch (error) {
+        console.error('Error sending ping:', error);
+      }
+    }
+
+    // Method to handle pong responses
+    handlePong(message) {
+      if (message.type === 'pong') {
+        console.log('Received pong from receiver');
+        this.lastPongTime = Date.now();
+      }
+    }
+  }
+
+  const sendMessage = obj =>
+    new Promise((resolve, reject) => {
       if (!castSession) {
         return reject(new Error('No active cast session'));
       }

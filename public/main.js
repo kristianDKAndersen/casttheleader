@@ -334,35 +334,17 @@ const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
 
-  const monitorConnection = context => {
-    let lastActivity = Date.now();
-    let lastSenderId = null; // Store the last sender ID
-
-    // Update lastActivity when messages are received
-    context.addCustomMessageListener(NAMESPACE, event => {
-      lastActivity = Date.now();
-      lastSenderId = event.senderId; // Store sender ID for keepalive messages
-    });
-
-    // Check connection status periodically
-    setInterval(() => {
-      const inactiveTime = Date.now() - lastActivity;
-      if (inactiveTime > 8 * 60 * 1000 && lastSenderId) {
-        // Check before 10-minute timeout
-        // Force some activity
-        context.sendCustomMessage(NAMESPACE, lastSenderId, {
-          type: 'keepalive',
-          timestamp: Date.now(),
-        });
-        lastActivity = Date.now(); // Reset the activity timer
-      }
-    }, 60 * 1000); // Check every minute
-  };
-
-  // Start monitoring
-  monitorConnection(context);
-
   context.addCustomMessageListener(NAMESPACE, event => {
+    // Check if it's a ping message
+    if (event.data.type === 'ping') {
+      log('Received ping, sending pong');
+      context.sendCustomMessage(NAMESPACE, event.senderId, {
+        type: 'pong',
+        timestamp: Date.now(),
+      });
+      return; // Exit early for ping messages
+    }
+
     update(event.data);
 
     // send something back
