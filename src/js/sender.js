@@ -1,4 +1,4 @@
-import UrlSanitizer from './utils/UrlSanitizer.js';
+import UrlSanitizer from './urlSanitizer';
 
 const sender = () => {
   const APP_ID = '64F29018';
@@ -198,19 +198,6 @@ const sender = () => {
 
   // Initialize Cast API - matching first script's approach
 
-  function startHeartbeat() {
-    console.log('Starting heartbeat');
-    setInterval(
-      () => {
-        if (castSession) {
-          castSession.sendMessage(NAMESPACE, { heartbeat: true });
-          console.log('Heartbeat sent');
-        }
-      },
-      1 * 60 * 1000
-    ); // Every 5 minutes
-  }
-
   const initializeCastApi = () => {
     const sessionRequest = new chrome.cast.SessionRequest(APP_ID);
     const apiConfig = new chrome.cast.ApiConfig(
@@ -222,7 +209,7 @@ const sender = () => {
       receiverAvailability => {
         console.log('Receiver availability:', receiverAvailability);
         if (receiverAvailability === 'available') {
-          startHeartbeat();
+          console.log('Receiver available');
         }
       }
     );

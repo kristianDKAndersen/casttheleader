@@ -338,119 +338,27 @@ const getShit = () => ({
   t: 'shit',
 });
 
-class DummyMediaManager {
-  constructor() {
-    this.playerManager = null;
-    this.heartbeatInterval = null;
-    this.isActive = false;
-  }
-
-  initialize(playerManager) {
-    this.playerManager = playerManager;
-    // Listen for session state changes
-    this.playerManager.addEventListener(cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () =>
-      this.onMediaLoaded()
-    );
-    this.playerManager.addEventListener(cast.framework.events.EventType.ERROR, event =>
-      this.onError(event)
-    );
-  }
-
-  startDummySession() {
-    if (this.isActive) {
-      log('Dummy session already active');
-      return;
-    }
-
-    const dummyMedia = {
-      // Using a 1-second silent MP3 file
-      contentId:
-        'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAASDs90hvAAAAAAAAAAAAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAATEFN//MUZAMAAAGkAAAAAAAAA0gAAAAARTMz//MUZAYAAAGkAAAAAAAAA0gAAAAAOTk5//MUZAkAAAGkAAAAAAAAA0gAAAAALi4u//MUZAwAAAGkAAAAAAAAA0gAAAAAERER//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA',
-      contentType: 'audio/mp3',
-      streamType: cast.framework.messages.StreamType.BUFFERED,
-      metadata: {
-        type: cast.framework.messages.MetadataType.GENERIC,
-        title: 'Keep Alive Session',
-      },
-      duration: 1, // 1 second duration
-    };
-
-    const request = new cast.framework.messages.LoadRequestData();
-    request.media = dummyMedia;
-    request.autoplay = true;
-
-    log('Starting dummy media session');
-    this.playerManager
-      .load(request)
-      .then(() => {
-        log('Dummy media session started successfully');
-        this.isActive = true;
-        this.startHeartbeat();
-      })
-      .catch(error => {
-        log('Failed to start dummy media session:', error);
-        console.error('Failed to start dummy media session:', error);
-        this.isActive = false;
-      });
-  }
-
-  onMediaLoaded() {
-    log('Media loaded successfully');
-    // Ensure autoplay works
-    this.playerManager.play();
-  }
-
-  onError(event) {
-    log('Media error:', event);
-    console.error('Media error:', event);
-    this.isActive = false;
-    // Try to restart the session after a brief delay
-    setTimeout(() => this.startDummySession(), 5000);
-  }
-
-  startHeartbeat() {
-    // Clear any existing interval
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-
-    // Restart the dummy session every 50 seconds to prevent timeout
-    this.heartbeatInterval = setInterval(() => {
-      if (this.isActive) {
-        this.startDummySession();
-      }
-    }, 50000);
-  }
-
-  stop() {
-    this.isActive = false;
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
-    if (this.playerManager) {
-      this.playerManager.stop();
-    }
-  }
-}
-
 const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
-
-  const playerManager = context.getPlayerManager();
-
-  const dummyManager = new DummyMediaManager();
-  dummyManager.initialize(playerManager);
-  // Start the dummy session when needed
-  dummyManager.startDummySession();
 
   context.setApplicationState('Starting...');
   log('setApplicationState');
   const options = new cast.framework.CastReceiverOptions();
   options.disableIdleTimeout = true; // Prevent idle timeout
-  options.maxInactivity = 28800;
-  log('disableIdleTimeout');
+
+  window.setInterval(() => {
+    const playerManager = context.getPlayerManager();
+    const message = new cast.framework.messages.LoadRequestData();
+    message.media.contentId = 'https://casttheleader.vercel.app/silence.mp3';
+    playerManager
+      .load(message)
+      .then(() => {})
+      .catch(error => {
+        console.log(error);
+        return;
+      });
+  }, 90000);
 
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
