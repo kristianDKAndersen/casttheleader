@@ -338,32 +338,110 @@ const getShit = () => ({
   t: 'shit',
 });
 
-/*
-const startDummyMediaSession = pm => {
-  log('startDummyMediaSession');
+class DummyMediaManager {
+  constructor() {
+    this.playerManager = null;
+    this.heartbeatInterval = null;
+    this.isActive = false;
+  }
 
-  const dummyMedia = {
-    contentId: './silence.mp3',
-    contentType: 'video/mp4',
-    streamType: 'BUFFERED',
-    metadata: {
-      type: 0,
-      title: 'Dummy Media Session',
-    },
-  };
+  initialize(playerManager) {
+    this.playerManager = playerManager;
+    // Listen for session state changes
+    this.playerManager.addEventListener(cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () =>
+      this.onMediaLoaded()
+    );
+    this.playerManager.addEventListener(cast.framework.events.EventType.ERROR, event =>
+      this.onError(event)
+    );
+  }
 
-  const mediaInformation = new cast.framework.messages.LoadRequestData();
-  mediaInformation.media = dummyMedia;
-  mediaInformation.autoplay = true;
+  startDummySession() {
+    if (this.isActive) {
+      console.log('Dummy session already active');
+      return;
+    }
 
-  pm.load(mediaInformation)
-    .then(() => console.log('Dummy media session started.'))
-    .catch(error => console.error('Failed to start dummy media session:', error));
-};*/
+    const dummyMedia = {
+      // Using a 1-second silent MP3 file
+      contentId:
+        'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAASDs90hvAAAAAAAAAAAAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAATEFN//MUZAMAAAGkAAAAAAAAA0gAAAAARTMz//MUZAYAAAGkAAAAAAAAA0gAAAAAOTk5//MUZAkAAAGkAAAAAAAAA0gAAAAALi4u//MUZAwAAAGkAAAAAAAAA0gAAAAAERER//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAAAAAA',
+      contentType: 'audio/mp3',
+      streamType: cast.framework.messages.StreamType.BUFFERED,
+      metadata: {
+        type: cast.framework.messages.MetadataType.GENERIC,
+        title: 'Keep Alive Session',
+      },
+      duration: 1, // 1 second duration
+    };
+
+    const request = new cast.framework.messages.LoadRequestData();
+    request.media = dummyMedia;
+    request.autoplay = true;
+
+    console.log('Starting dummy media session');
+    this.playerManager
+      .load(request)
+      .then(() => {
+        console.log('Dummy media session started successfully');
+        this.isActive = true;
+        this.startHeartbeat();
+      })
+      .catch(error => {
+        console.error('Failed to start dummy media session:', error);
+        this.isActive = false;
+      });
+  }
+
+  onMediaLoaded() {
+    console.log('Media loaded successfully');
+    // Ensure autoplay works
+    this.playerManager.play();
+  }
+
+  onError(event) {
+    console.error('Media error:', event);
+    this.isActive = false;
+    // Try to restart the session after a brief delay
+    setTimeout(() => this.startDummySession(), 5000);
+  }
+
+  startHeartbeat() {
+    // Clear any existing interval
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+
+    // Restart the dummy session every 50 seconds to prevent timeout
+    this.heartbeatInterval = setInterval(() => {
+      if (this.isActive) {
+        this.startDummySession();
+      }
+    }, 50000);
+  }
+
+  stop() {
+    this.isActive = false;
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    if (this.playerManager) {
+      this.playerManager.stop();
+    }
+  }
+}
 
 const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
+
+  const playerManager = context.getPlayerManager();
+
+  const dummyManager = new DummyMediaManager();
+  dummyManager.initialize(playerManager);
+  // Start the dummy session when needed
+  dummyManager.startDummySession();
 
   context.setApplicationState('Starting...');
   log('setApplicationState');
