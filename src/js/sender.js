@@ -1,4 +1,4 @@
-import UrlSanitizer from './urlSanitizer';
+import UrlSanitizer from './utils/UrlSanitizer.js';
 
 const sender = () => {
   const APP_ID = '64F29018';
