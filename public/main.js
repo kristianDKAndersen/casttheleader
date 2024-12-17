@@ -343,8 +343,9 @@ const setupCast = () => {
   const context = cast.framework.CastReceiverContext.getInstance();
 
   context.setApplicationState('Starting...');
+  log('setApplicationState');
   context.getApplicationConfig().disableIdleTimeout = true;
-
+  log('getApplicationConfig');
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
 
