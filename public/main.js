@@ -339,6 +339,8 @@ const getShit = () => ({
 });
 
 const startDummyMediaSession = pm => {
+  log('startDummyMediaSession');
+
   const dummyMedia = {
     contentId: './silence.mp3',
     contentType: 'video/mp4',
