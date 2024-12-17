@@ -338,6 +338,7 @@ const getShit = () => ({
   t: 'shit',
 });
 
+/*
 const startDummyMediaSession = pm => {
   log('startDummyMediaSession');
 
@@ -358,12 +359,11 @@ const startDummyMediaSession = pm => {
   pm.load(mediaInformation)
     .then(() => console.log('Dummy media session started.'))
     .catch(error => console.error('Failed to start dummy media session:', error));
-};
+};*/
 
 const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
-  const playerManager = context.getPlayerManager();
 
   context.setApplicationState('Starting...');
   log('setApplicationState');
@@ -382,8 +382,6 @@ const setupCast = () => {
         type: 'pong',
         timestamp: Date.now(),
       });
-
-      startDummyMediaSession(playerManager);
 
       if (fi.style.display === 'none') {
         fi.style.display = 'block';

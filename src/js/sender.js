@@ -197,15 +197,33 @@ const sender = () => {
   });
 
   // Initialize Cast API - matching first script's approach
+
+  function startHeartbeat() {
+    console.log('Starting heartbeat');
+    setInterval(
+      () => {
+        if (castSession) {
+          castSession.sendMessage(NAMESPACE, { heartbeat: true });
+          console.log('Heartbeat sent');
+        }
+      },
+      1 * 60 * 1000
+    ); // Every 5 minutes
+  }
+
   const initializeCastApi = () => {
     const sessionRequest = new chrome.cast.SessionRequest(APP_ID);
     const apiConfig = new chrome.cast.ApiConfig(
       sessionRequest,
+
       _session => {
         castSession = _session;
       },
       receiverAvailability => {
         console.log('Receiver availability:', receiverAvailability);
+        if (receiverAvailability === 'available') {
+          startHeartbeat();
+        }
       }
     );
 
