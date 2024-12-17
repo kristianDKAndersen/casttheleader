@@ -365,25 +365,11 @@ const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
 
-  const messageBus = context.getMessageBus(NAMESPACE);
-
-  // Listen for incoming messages
-  messageBus.onMessage = event => {
-    console.log('Message received:', event.data);
-
-    if (event.data.type === 'heartbeat') {
-      console.log('Heartbeat message received:', event.data.message);
-
-      // Respond to the heartbeat to acknowledge
-      messageBus.send(event.senderId, { type: 'heartbeat', message: 'pong' });
-    }
-  };
-
   context.setApplicationState('Starting...');
   log('setApplicationState');
   const options = new cast.framework.CastReceiverOptions();
   options.disableIdleTimeout = true; // Prevent idle timeout
-
+  options.maxInactivity = 28800;
   log('disableIdleTimeout');
 
   context.addCustomMessageListener(NAMESPACE, event => {
@@ -404,6 +390,12 @@ const setupCast = () => {
       }
 
       return; // Exit early for ping messages
+    }
+    if (event.data.type === 'heartbeat') {
+      console.log('Heartbeat message received:', event.data.message);
+
+      // Respond to the heartbeat to acknowledge
+      context.sendCustomMessage(NAMESPACE, event.senderId, { type: 'heartbeat', message: 'pong' });
     }
 
     // send something back
