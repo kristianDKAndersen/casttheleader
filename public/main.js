@@ -358,7 +358,7 @@ class DummyMediaManager {
 
   startDummySession() {
     if (this.isActive) {
-      console.log('Dummy session already active');
+      log('Dummy session already active');
       return;
     }
 
@@ -379,27 +379,29 @@ class DummyMediaManager {
     request.media = dummyMedia;
     request.autoplay = true;
 
-    console.log('Starting dummy media session');
+    log('Starting dummy media session');
     this.playerManager
       .load(request)
       .then(() => {
-        console.log('Dummy media session started successfully');
+        log('Dummy media session started successfully');
         this.isActive = true;
         this.startHeartbeat();
       })
       .catch(error => {
+        log('Failed to start dummy media session:', error);
         console.error('Failed to start dummy media session:', error);
         this.isActive = false;
       });
   }
 
   onMediaLoaded() {
-    console.log('Media loaded successfully');
+    log('Media loaded successfully');
     // Ensure autoplay works
     this.playerManager.play();
   }
 
   onError(event) {
+    log('Media error:', event);
     console.error('Media error:', event);
     this.isActive = false;
     // Try to restart the session after a brief delay
