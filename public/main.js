@@ -348,15 +348,22 @@ const setupCast = () => {
   options.disableIdleTimeout = true; // Prevent idle timeout
 
   window.setInterval(() => {
+    log('playerManager init');
     const playerManager = context.getPlayerManager();
-    const message = new cast.framework.messages.LoadRequestData();
-    message.media.contentId = 'https://casttheleader.vercel.app/silence.mp3';
+    const mediaInfo = new chrome.cast.media.MediaInfo(
+      'https://casttheleader.vercel.app/silence.mp3',
+      'audio/mp3'
+    );
+
+    const request = new chrome.cast.media.LoadRequest(mediaInfo);
+
     playerManager
-      .load(message)
-      .then(() => {})
+      .load(request)
+      .then(() => {
+        log('playerManager Media loaded successfully');
+      })
       .catch(error => {
-        console.log(error);
-        return;
+        log('playerManager Error loading media:', error);
       });
   }, 90000);
 
