@@ -89,6 +89,7 @@ const sender = () => {
 
           // Handle pong responses
           if (message.type === 'pong') {
+            console.log(castSession);
             pingPong.handlePong(message);
           }
         });
@@ -116,7 +117,7 @@ const sender = () => {
     constructor(castSession) {
       this.castSession = castSession;
       this.NAMESPACE = 'urn:x-cast:com.screeninfo.app'; // Same namespace as receiver
-      this.pingInterval = 5 * 60 * 1000; // Ping every 5 minutes
+      this.pingInterval = 1 * 60 * 1000; // Ping every 1 minutes
       this.pingTimeout = null;
       this.lastPongTime = Date.now();
     }
