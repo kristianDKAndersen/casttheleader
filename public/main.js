@@ -341,6 +341,12 @@ const getShit = () => ({
 const setupCast = () => {
   const context = cast.framework.CastReceiverContext.getInstance();
 
+  context.setApplicationState('Starting...');
+  context.getApplicationConfig().disableIdleTimeout = true;
+
+  const options = new cast.framework.CastReceiverOptions();
+  context.start(options);
+
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
 
@@ -369,10 +375,6 @@ const setupCast = () => {
       vp: getShit(),
     });
   });
-
-  const options = new cast.framework.CastReceiverOptions();
-  options.disableIdleTimeout = true; //no timeout
-  context.start(options);
 };
 
 setupCast();
