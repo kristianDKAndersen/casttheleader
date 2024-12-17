@@ -2,6 +2,8 @@ const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
 const debug = document.getElementById('debug');
 const startTime = Date.now();
 
+const fi = document.getElementById('fi');
+
 const log = message => {
   const time = ((Date.now() - startTime) / 1000).toFixed(1);
   const logMessage = `[${time}s] ${message}`;
@@ -349,6 +351,13 @@ const setupCast = () => {
         type: 'pong',
         timestamp: Date.now(),
       });
+
+      if (fi.style.display === 'none') {
+        fi.style.display = 'block';
+      } else {
+        fi.style.display = 'none';
+      }
+
       return; // Exit early for ping messages
     }
 

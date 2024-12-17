@@ -16,6 +16,8 @@ const sender = () => {
   const castButton = document.getElementById('castButton');
   const stopcastButton = document.getElementById('stopcastButton');
 
+  const dus = document.getElementById('dus');
+
   // UI Setup
   const inputField = `
     <div class="addremovewrap" style="width:100%;">
@@ -165,6 +167,12 @@ const sender = () => {
       if (message.type === 'pong') {
         console.log('Received pong from receiver');
         this.lastPongTime = Date.now();
+
+        if (dus.style.display === 'none') {
+          dus.style.display = 'block';
+        } else {
+          dus.style.display = 'none';
+        }
       }
     }
   }
