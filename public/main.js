@@ -338,9 +338,30 @@ const getShit = () => ({
   t: 'shit',
 });
 
+const startDummyMediaSession = pm => {
+  const dummyMedia = {
+    contentId: './silence.mp3',
+    contentType: 'video/mp4',
+    streamType: 'BUFFERED',
+    metadata: {
+      type: 0,
+      title: 'Dummy Media Session',
+    },
+  };
+
+  const mediaInformation = new cast.framework.messages.LoadRequestData();
+  mediaInformation.media = dummyMedia;
+  mediaInformation.autoplay = true;
+
+  pm.load(mediaInformation)
+    .then(() => console.log('Dummy media session started.'))
+    .catch(error => console.error('Failed to start dummy media session:', error));
+};
+
 const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
+  const playerManager = context.getPlayerManager();
 
   context.setApplicationState('Starting...');
   log('setApplicationState');
@@ -359,6 +380,8 @@ const setupCast = () => {
         type: 'pong',
         timestamp: Date.now(),
       });
+
+      startDummyMediaSession(playerManager);
 
       if (fi.style.display === 'none') {
         fi.style.display = 'block';
