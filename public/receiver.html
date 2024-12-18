@@ -34,12 +34,38 @@
             width: 100%;
             height: 100%;
         }
+        #debug {
+            
+            color: #fff;
+            z-index: 1000;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 90%;
+            word-wrap: break-word;
+            font-size: 10px;
+        }
     </style>
 </head>
 <body>
+    <div id="debug">Starting...</div>
     <cast-media-player></cast-media-player>
     
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const debug = document.getElementById('debug');
+            const log = message => {
+            const time = ((Date.now() - startTime) / 1000).toFixed(1);
+            const logMessage = `[${time}s] ${message}`;
+
+            debug.innerHTML = `${logMessage}<br>${debug.innerHTML}`;
+            };
+
+
         const context = cast.framework.CastReceiverContext.getInstance();
         const playerManager = context.getPlayerManager();
 
@@ -60,8 +86,22 @@
         const playerData = new cast.framework.ui.PlayerData();
         const playerDataBinder = new cast.framework.ui.PlayerDataBinder(playerData);
 
+        context.addEventListener(cast.framework.system.EventType.READY, event => {
+            log('System ready', event);
+        });
+
+        context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
+            log('Sender connected:', event.senderId);
+        });
+
+        context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
+            log('Sender disconnected:', event.senderId);
+        });
+
         // Start the receiver
         context.start();
+        });
+
     </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Chromecast Audio Sender</title>
-    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+ 
     <style>
         .controls {
             margin: 20px;
@@ -23,8 +23,11 @@
         <button id="playAudio" disabled>Play Audio</button>
         <button id="stopAudio" disabled>Stop</button>
     </div>
-    
+   
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
     <script>
+document.addEventListener('DOMContentLoaded', () => {
+console.log("poop")
         const APP_ID = '64F29018';
         const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
         const AUDIO_URL = 'https://casttheleader.vercel.app/silence15.mp3';
@@ -33,7 +36,12 @@
         let currentMediaSession = null;
         let reloadTimer = null;
 
-        // Function to reload media while maintaining playback position
+        const playButton = document.getElementById('playAudio');
+        const stopButton = document.getElementById('stopAudio');
+        const castButton = document.getElementById('castButton');
+
+
+        // Function to reload m edia while maintaining playback position
         function reloadMedia() {
             if (castSession) {
                 // Store current playback state
@@ -64,6 +72,22 @@
                 );
             }
         }
+
+        
+        const connectCast = async () => {
+        console.log("clicked")
+        return new Promise((resolve, reject) => {
+      chrome.cast.requestSession(_session => {
+        castSession = _session;
+        if(castSession){
+            stopButton.disabled = false;
+            playButton.disabled = false;
+        }
+      }, reject);
+    });
+        };
+
+
 
         // Function to start playback and reload timer
         function startPlayback() {
@@ -114,29 +138,30 @@
             }
         }
 
-        initializeCastApi = () => {
-            // Initialize Cast API
-            cast.framework.CastContext.getInstance().setOptions({
-                receiverApplicationId: APP_ID,
-                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
+        function initializeCastApi(){
 
-            // Initialize cast button
-            const context = cast.framework.CastContext.getInstance();
-            const button = new cast.framework.CastButtonComponent();
-            document.getElementById('castButton').appendChild(button);
+         console.log('initializeCastApi')
+
+            // Initialize Cast API
+            const castContext = cast.framework.CastContext.getInstance();
+
+            castContext.setOptions({
+                receiverApplicationId: APP_ID,
+                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+                });
+
 
             // Session management
-            context.addEventListener(
-                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+            castContext.addEventListener(
+                castContext.SESSION_STATE_CHANGED,
                 event => {
                     switch(event.sessionState) {
-                        case cast.framework.SessionState.SESSION_STARTED:
-                        case cast.framework.SessionState.SESSION_RESUMED:
-                            castSession = context.getCurrentSession();
+                        case cast.framework.SessionState.castContext.SESSION_STARTED:
+                        case cast.framework.SessionState.castContext.SESSION_RESUMED:
+                            castSession = castContext.getCurrentSession();
                             document.getElementById('playAudio').disabled = false;
                             break;
-                        case cast.framework.SessionState.SESSION_ENDED:
+                        case cast.framework.SessionState.castContext.SESSION_ENDED:
                             castSession = null;
                             currentMediaSession = null;
                             document.getElementById('playAudio').disabled = true;
@@ -149,23 +174,54 @@
                     }
                 }
             );
+          
 
-            // Add click handlers
-            document.getElementById('playAudio').addEventListener('click', startPlayback);
-            document.getElementById('stopAudio').addEventListener('click', stopPlayback);
+            console.log(castButton)
+
+            playButton.addEventListener('click', () => {
+                console.log('Play button clicked');
+                startPlayback();
+            });
+
+              stopButton.addEventListener('click', () => {
+                console.log('Stop button clicked');
+                stopPlayback();
+            });
+
+            castButton.addEventListener('click', () => {
+                console.log('connectCast  button clicked');
+                connectCast();
+            });
+            castButton.addEventListener('click', async () => {
+                try {
+                   
+
+                } catch (error) {
+                console.error('Cast error:', error);
+                }
+            }); 
+      
         };
+        console.log('before __onGCastApiAvailable')
+        window['__onGCastApiAvailable'] = (loaded, errorInfo) => {
+            
+            if (loaded) {
+            initializeCastApi();
+            } else {
+            console.error('Cast API load error:', errorInfo);
+            }
+        };
+})
 
-    window['__onGCastApiAvailable'] = (loaded, errorInfo) => {
-    if (loaded) {
-      initializeCastApi();
-    } else {
-      console.error('Cast API load error:', errorInfo);
-    }
-  };
+
+
     </script>
 </body>
 </html>
-<!-- <!DOCTYPE html>
+
+
+<!-- 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="icon" href="data:,">
