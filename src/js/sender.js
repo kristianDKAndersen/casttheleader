@@ -1,105 +1,202 @@
-const APP_ID = '64F29018';
-const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
-let castSession = null;
-let castContext = null;
+import UrlSanitizer from './utils/UrlSanitizer.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const connectButton = document.getElementById('connectButton');
+const sender = () => {
+  const APP_ID = '64F29018';
+  const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
+  let castSession = null;
+  let pingPong = null;
+
+  const state = {
+    url: [''],
+  };
+
+  // UI Elements
+  const addInput = document.querySelector('.addInput');
+  const theInputcontainer = document.querySelector('.theInputcontainer');
   const castButton = document.getElementById('castButton');
-  connectButton.disabled = true;
-  castButton.disabled = true;
-  // Add button click handlers
-  connectButton.addEventListener('click', connectToChromecast);
-  castButton.addEventListener('click', castMedia);
+  const stopcastButton = document.getElementById('stopcastButton');
 
-  // Cast media to Chromecast
-  function castMedia() {
-    if (!castSession) {
-      console.error('No cast session available');
-      return;
+  const dus = document.getElementById('dus');
+
+  // UI Setup
+  const inputField = `
+    <div class="addremovewrap" style="width:100%;">
+      <input type="text" class="input" placeholder="Enter URL" />
+      <div role="button" class="addremove removeInput"> - </div>
+    </div>
+  `;
+
+  // UI Event Listeners
+  addInput.addEventListener('click', () => {
+    theInputcontainer.insertAdjacentHTML('afterbegin', inputField);
+  });
+
+  theInputcontainer.addEventListener('click', e => {
+    if (e.target.classList.contains('removeInput')) {
+      e.target.closest('.addremovewrap').remove();
     }
+    if (e.target.classList.contains('input')) {
+      e.target.addEventListener('blur', e => {
+        UrlSanitizer(e.target.value);
+      });
+    }
+  });
 
-    const mediaInfo = {
-      contentId: document.getElementById('previewImage').src,
-      contentType: 'image/jpeg',
-      streamType: chrome.cast.media.StreamType.NONE,
-    };
+  const getUrls = () => {
+    const inputUrls = document.querySelectorAll('input[type=text]');
+    return Array.from(inputUrls).map(input => input.value);
+  };
 
-    const request = new chrome.cast.media.LoadRequest(mediaInfo);
-    castSession
-      .loadMedia(request)
-      .then(() => {
-        console.log('Image loaded successfully');
-        // Now send the audio URL through custom message
-        const audioUrl = document.getElementById('previewAudio').querySelector('source').src;
-        castSession.sendMessage(NAMESPACE, {
-          type: 'LOAD_AUDIO',
-          url: audioUrl,
+  castButton.addEventListener('click', async () => {
+    try {
+      await cast(getUrls());
+    } catch (error) {
+      console.error('Cast error:', error);
+    }
+  });
+
+  stopcastButton.addEventListener('click', () => {
+    try {
+      stop();
+    } catch (error) {
+      console.error('Stop error:', error);
+    }
+  });
+
+  // Core Cast functionality - matching first script's approach
+  const checkApi = () => {
+    if (!(chrome && chrome.cast)) {
+      console.error(
+        'Google Cast API not found, please include www.gstatic.com/cv/js/sender/v1/cast_sender.js'
+      );
+    }
+  };
+
+  const cast = url => {
+    checkApi();
+    return new Promise((resolve, reject) => {
+      chrome.cast.requestSession(_session => {
+        castSession = _session;
+
+        // Initialize ping/pong when session starts
+        pingPong = new CastPingPong(castSession);
+        pingPong.startPinging();
+
+        castSession.addMessageListener(NAMESPACE, (namespace, data) => {
+          // Parse data if it's a string
+          const message = typeof data === 'string' ? JSON.parse(data) : data;
+          console.log('Received message:', message);
+
+          // Handle pong responses
+          if (message.type === 'pong') {
+            console.log(castSession);
+            pingPong.handlePong(message);
+          }
         });
-      })
-      .catch(error => {
-        console.error('Error loading media:', error);
-        updateStatus(`Error loading media: ${error.message}`);
-      });
-  }
 
-  // Connect to Chromecast
-  function connectToChromecast() {
-    updateStatus('Attempting to connect to Chromecast...');
-    castContext
-      .requestSession()
-      .then(() => {
-        updateStatus('Connected successfully');
-        console.log('Connected successfully');
-      })
-      .catch(error => {
-        let errorMessage = 'Error connecting to Chromecast: ';
-        if (error.code === 'cancel') {
-          errorMessage += 'Connection cancelled by user';
-        } else if (error.code === 'timeout') {
-          errorMessage += 'Connection timed out';
-        } else if (error.code === 'unavailable') {
-          errorMessage += 'No Chromecast devices found';
+        if (url && url[0]) {
+          resolve(updateUrl(url));
         } else {
-          errorMessage += error.message || error.code || 'Unknown error';
+          sendMessage({}).then(resolve);
         }
-        updateStatus(errorMessage);
-        console.error('Chromecast connection error:', error);
-      });
-  }
+      }, reject);
+    });
+  };
 
-  // Update status message
-  function updateStatus(message) {
-    const status = document.getElementById('status');
-    status.textContent = `Status: ${message}`;
-  }
-  // Handle Cast state changes
-  function handleCastStateChange(event) {
-    const { castState } = event;
+  const stop = () => {
+    if (castSession) {
+      if (pingPong) {
+        pingPong.stopPinging();
+        pingPong = null;
+      }
+      castSession.stop();
+    }
+  };
 
-    switch (castState) {
-      case cast.framework.CastState.NO_DEVICES_AVAILABLE:
-        updateStatus('No Chromecast devices found');
-        document.getElementById('castButton').disabled = true;
-        break;
-      case cast.framework.CastState.NOT_CONNECTED:
-        updateStatus('Ready to connect');
-        document.getElementById('castButton').disabled = true;
-        break;
-      case cast.framework.CastState.CONNECTING:
-        updateStatus('Connecting...');
-        document.getElementById('castButton').disabled = true;
-        break;
-      case cast.framework.CastState.CONNECTED:
-        castSession = castContext.getCurrentSession();
-        updateStatus(`Connected to ${castSession.getCastDevice().friendlyName}`);
-        document.getElementById('castButton').disabled = false;
-        break;
-      default:
-        updateStatus(`Unknown cast state: ${castState}`);
-        document.getElementById('castButton').disabled = true;
+  class CastPingPong {
+    constructor(castSession) {
+      this.castSession = castSession;
+      this.NAMESPACE = 'urn:x-cast:com.screeninfo.app'; // Same namespace as receiver
+      this.pingInterval = 1 * 60 * 1000; // Ping every 1 minutes
+      this.pingTimeout = null;
+      this.lastPongTime = Date.now();
+    }
+
+    startPinging() {
+      console.log('Starting ping/pong');
+      // Clear any existing interval
+      if (this.pingTimeout) {
+        clearInterval(this.pingTimeout);
+      }
+
+      // Start sending pings
+      this.pingTimeout = setInterval(() => {
+        this.sendPing();
+      }, this.pingInterval);
+
+      // Send initial ping
+      this.sendPing();
+    }
+
+    stopPinging() {
+      console.log('Stopping ping/pong');
+      if (this.pingTimeout) {
+        clearInterval(this.pingTimeout);
+        this.pingTimeout = null;
+      }
+    }
+
+    sendPing() {
+      if (!this.castSession) {
+        console.warn('No cast session available');
+        return;
+      }
+
+      try {
+        console.log('Sending ping to receiver');
+        this.castSession.sendMessage(this.NAMESPACE, {
+          type: 'ping',
+          timestamp: Date.now(),
+        });
+      } catch (error) {
+        console.error('Error sending ping:', error);
+      }
+    }
+
+    // Method to handle pong responses
+    handlePong(message) {
+      if (message.type === 'pong') {
+        console.log('Received pong from receiver');
+        this.lastPongTime = Date.now();
+
+        if (dus.style.display === 'none') {
+          dus.style.display = 'block';
+        } else {
+          dus.style.display = 'none';
+        }
+      }
     }
   }
+
+  const sendMessage = obj =>
+    new Promise((resolve, reject) => {
+      if (!castSession) {
+        return reject(new Error('No active cast session'));
+      }
+
+      castSession.sendMessage(NAMESPACE, JSON.stringify(obj), () => resolve(obj), reject);
+    });
+
+  const update = fn => value => {
+    fn(value);
+    return sendMessage(state);
+  };
+
+  const updateUrl = update(value => {
+    state.url = Array.isArray(value) ? value : [value];
+  });
+
+  // Initialize Cast API - matching first script's approach
 
   const initializeCastApi = () => {
     const sessionRequest = new chrome.cast.SessionRequest(APP_ID);
@@ -113,23 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Receiver availability:', receiverAvailability);
         if (receiverAvailability === 'available') {
           console.log('Receiver available');
-
-          const ctx = cast.framework.CastContext.getInstance();
-
-          ctx.setOptions({
-            receiverApplicationId: APP_ID,
-            autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
-          });
-
-          ctx.addEventListener(
-            cast.framework.CastContextEventType.CAST_STATE_CHANGED,
-            handleCastStateChange
-          );
-
-          castContext = ctx;
-
-          connectButton.disabled = false;
-          castButton.disabled = false;
         }
       }
     );
@@ -141,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   };
 
+  // Initialize when API is available
   window['__onGCastApiAvailable'] = (loaded, errorInfo) => {
     if (loaded) {
       initializeCastApi();
@@ -148,133 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Cast API load error:', errorInfo);
     }
   };
-});
-
-/*
-// Update status message
-function updateStatus(message) {
-  const status = document.getElementById('status');
-  status.textContent = `Status: ${message}`;
-}
-
-// Initialize when API is available
-window['__onGCastApiAvailable'] = (loaded, errorInfo) => {
-  if (loaded) {
-    initializeCastApi();
-  } else {
-    console.error('Cast API load error:', errorInfo);
-  }
 };
 
-// Initialize the Cast API
-function initializeCastApi() {
-  try {
-    const context = cast.framework.CastContext.getInstance();
-    context.setOptions({
-      receiverApplicationId: APP_ID,
-      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
-    });
-
-    castContext = context;
-
-    // Add event listeners
-    castContext.addEventListener(
-      cast.framework.CastContextEventType.CAST_STATE_CHANGED,
-      handleCastStateChange
-    );
-
-    // Add button click handlers
-    document.getElementById('connectButton').addEventListener('click', connectToChromecast);
-    document.getElementById('castButton').addEventListener('click', castMedia);
-
-    updateStatus('Cast API initialized successfully');
-  } catch (error) {
-    updateStatus(`Error initializing Cast API: ${error.message}`);
-    console.error('Cast initialization error:', error);
-  }
-}
-
-// Handle Cast state changes
-function handleCastStateChange(event) {
-  const { castState } = event;
-
-  switch (castState) {
-    case cast.framework.CastState.NO_DEVICES_AVAILABLE:
-      updateStatus('No Chromecast devices found');
-      document.getElementById('castButton').disabled = true;
-      break;
-    case cast.framework.CastState.NOT_CONNECTED:
-      updateStatus('Ready to connect');
-      document.getElementById('castButton').disabled = true;
-      break;
-    case cast.framework.CastState.CONNECTING:
-      updateStatus('Connecting...');
-      document.getElementById('castButton').disabled = true;
-      break;
-    case cast.framework.CastState.CONNECTED:
-      castSession = castContext.getCurrentSession();
-      updateStatus(`Connected to ${castSession.getCastDevice().friendlyName}`);
-      document.getElementById('castButton').disabled = false;
-      break;
-    default:
-      updateStatus(`Unknown cast state: ${castState}`);
-      document.getElementById('castButton').disabled = true;
-  }
-}
-
-// Connect to Chromecast
-function connectToChromecast() {
-  updateStatus('Attempting to connect to Chromecast...');
-  castContext
-    .requestSession()
-    .then(() => {
-      updateStatus('Connected successfully');
-      console.log('Connected successfully');
-    })
-    .catch(error => {
-      let errorMessage = 'Error connecting to Chromecast: ';
-      if (error.code === 'cancel') {
-        errorMessage += 'Connection cancelled by user';
-      } else if (error.code === 'timeout') {
-        errorMessage += 'Connection timed out';
-      } else if (error.code === 'unavailable') {
-        errorMessage += 'No Chromecast devices found';
-      } else {
-        errorMessage += error.message || error.code || 'Unknown error';
-      }
-      updateStatus(errorMessage);
-      console.error('Chromecast connection error:', error);
-    });
-}
-
-// Cast media to Chromecast
-function castMedia() {
-  if (!castSession) {
-    console.error('No cast session available');
-    return;
-  }
-
-  const mediaInfo = {
-    contentId: document.getElementById('previewImage').src,
-    contentType: 'image/jpeg',
-    streamType: chrome.cast.media.StreamType.NONE,
-  };
-
-  const request = new chrome.cast.media.LoadRequest(mediaInfo);
-  castSession
-    .loadMedia(request)
-    .then(() => {
-      console.log('Image loaded successfully');
-      // Now send the audio URL through custom message
-      const audioUrl = document.getElementById('previewAudio').querySelector('source').src;
-      castSession.sendMessage(NAMESPACE, {
-        type: 'LOAD_AUDIO',
-        url: audioUrl,
-      });
-    })
-    .catch(error => {
-      console.error('Error loading media:', error);
-      updateStatus(`Error loading media: ${error.message}`);
-    });
-}
-*/
+export default sender;

@@ -344,28 +344,6 @@ const setupCast = () => {
 
   context.setApplicationState('Starting...');
   log('setApplicationState');
-  const options = new cast.framework.CastReceiverOptions();
-  options.disableIdleTimeout = true; // Prevent idle timeout
-
-  window.setInterval(() => {
-    log('playerManager init');
-    const playerManager = context.getPlayerManager();
-    const mediaInfo = new chrome.cast.media.MediaInfo(
-      'https://casttheleader.vercel.app/silence.mp3',
-      'audio/mp3'
-    );
-
-    const request = new chrome.cast.media.LoadRequest(mediaInfo);
-
-    playerManager
-      .load(request)
-      .then(() => {
-        log('playerManager Media loaded successfully');
-      })
-      .catch(error => {
-        log('playerManager Error loading media:', error);
-      });
-  }, 90000);
 
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
@@ -402,7 +380,7 @@ const setupCast = () => {
     });
   });
 
-  context.start(options);
+  context.start({ disableIdleTimeout: true });
 };
 
 setupCast();

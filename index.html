@@ -15,50 +15,7 @@
 
 
 
- <style>
-    body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-    }
-    .container {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-    .button {
-        background-color: #4285f4;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin: 10px 0;
-    }
-    .button:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
-    }
-    #status {
-        margin: 10px 0;
-        padding: 10px;
-        background-color: #f0f0f0;
-    }
-</style>
 </head>
-<body>
-<div class="container">
-    <h1>Cast Sender Application</h1>
-    <div id="status">Status: Not connected</div>
-    <button id="connectButton" class="button">Connect to Chromecast</button>
-    <button id="castButton" class="button" disabled>Cast Media</button>
-    <div>
-        <h3>Media to Cast:</h3>
-        <img id="previewImage" src="./public/wuub.jpg" alt="Sample image" style="max-width: 400px;">
-        <p>Sample audio file: <audio id="previewAudio" controls>
-            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-        </audio></p>
-    </div>
-</div>
-<!--
 <body class="bg-SG_Blue">
     <div id="app" data-v-app="">
         <main class="mx-auto flex h-full w-full flex-col items-center p-5">
@@ -84,10 +41,10 @@
                     
                     <section class="flex flex-col w-full theInputcontainer">
                             
-                           <div class="flex flex-row justify-evenly items-center" style="order: 1;">
+                            <!--<div class="flex flex-row justify-evenly items-center" style="order: 1;">
                                 <input type="url" class="m-1 border bg-white rounded-lg p-2 w-5/6" placeholder="Enter URL (e.g., example.com)"  url="" data-id="index">
                                 <div role="button" class="addremove rounded-full bg-white w-8 h-8 text-center text-black flex justify-center items-center font-bold"> - </div>
-                            </div>
+                            </div>-->
                         </section>
                         
                         <section class="flex flex-row w-full justify-between "></section>
@@ -97,8 +54,6 @@
   
 
 <footer class="flex w-full flex-row items-center justify-center bg-green"><div id="dus">*</div></footer>
-
- -->
- <script src="./src/js/sender.js"></script>
+ <script type="module" src="main.js"></script>
 </body>
 </html>
