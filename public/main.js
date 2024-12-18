@@ -347,31 +347,28 @@ const setupCast = () => {
   const addr = 'https://casttheleader.vercel.app/wuub.jpg';
 
   async function runEvery30Seconds() {
-    log('Run mediaInfo');
     while (true) {
-      // Check if Cast is available and connected
-      if (context) {
+      const session = context.getCurrentSession();
+      if (session) {
+        log('session');
         // const castContext = cast.framework.CastContext.getInstance();
-        const session = context.getCurrentSession();
 
-        if (session) {
-          // Create media info
-          const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
-          mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-          mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
+        // Create media info
+        const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
+        mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+        mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
 
-          // Create request
-          const request = new chrome.cast.media.LoadRequest(mediaInfo);
-          request.autoplay = true;
-          log('mediaInfo info: ', mediaInfo);
-          // Load the media
-          session.loadMedia(request).catch(error => {
-            log('mediaInfo error: ', error);
-            console.error('Error loading media:', error);
-          });
-        }
+        // Create request
+        const request = new chrome.cast.media.LoadRequest(mediaInfo);
+        request.autoplay = true;
+        log('mediaInfo info: ', mediaInfo);
+        // Load the media
+        session.loadMedia(request).catch(error => {
+          log('mediaInfo error: ', error);
+          console.error('Error loading media:', error);
+        });
       } else {
-        log('No context');
+        log('No session');
       }
       await new Promise(resolve => setTimeout(resolve, 30000));
     }
@@ -379,16 +376,16 @@ const setupCast = () => {
 
   // Add listeners for system events
   context.addEventListener(cast.framework.system.EventType.READY, event => {
-    console.log('System ready', event);
+    log('System ready', event);
   });
 
   context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
-    console.log('Sender connected:', event.senderId);
+    log('Sender connected:', event.senderId);
     runEvery30Seconds();
   });
 
   context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
-    console.log('Sender disconnected:', event.senderId);
+    log('Sender disconnected:', event.senderId);
   });
 
   context.setApplicationState('Starting...');
