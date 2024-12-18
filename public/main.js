@@ -2,8 +2,6 @@ const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
 const debug = document.getElementById('debug');
 const startTime = Date.now();
 
-const fi = document.getElementById('fi');
-
 const log = message => {
   const time = ((Date.now() - startTime) / 1000).toFixed(1);
   const logMessage = `[${time}s] ${message}`;
@@ -338,6 +336,32 @@ const getShit = () => ({
   t: 'shit',
 });
 
+const playFakeContent = () => {
+  const addr = 'https://casttheleader.vercel.app/wuub.jpg';
+
+  // Check if Cast is available and connected
+  if (cast && cast.framework) {
+    const castContext = cast.framework.CastContext.getInstance();
+    const session = castContext.getCurrentSession();
+
+    if (session) {
+      // Create media info
+      const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
+      mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+      mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
+
+      // Create request
+      const request = new chrome.cast.media.LoadRequest(mediaInfo);
+      request.autoplay = true;
+
+      // Load the media
+      session.loadMedia(request).catch(error => {
+        console.error('Error loading media:', error);
+      });
+    }
+  }
+};
+
 const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
@@ -356,11 +380,7 @@ const setupCast = () => {
         timestamp: Date.now(),
       });
 
-      if (fi.style.display === 'none') {
-        fi.style.display = 'block';
-      } else {
-        fi.style.display = 'none';
-      }
+      playFakeContent();
 
       return; // Exit early for ping messages
     }
