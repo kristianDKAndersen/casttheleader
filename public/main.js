@@ -378,13 +378,15 @@ const setupCast = () => {
     }
   }
 
-  context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, event => {
-    if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
+  context.addEventListener(cast.framework.system.EventType.SESSION_STATE_CHANGED, event => {
+    if (event.sessionState === cast.framework.system.SessionState.SESSION_STARTED) {
       castSession = context.getCurrentSession();
       log(castSession);
+      // Start the interval
       runEvery30Seconds();
-    } else if (event.sessionState === cast.framework.SessionState.SESSION_ENDED) {
+    } else if (event.sessionState === cast.framework.system.SessionState.SESSION_ENDED) {
       log('Session ended');
+      // Clear the interval when session ends
     }
   });
 
