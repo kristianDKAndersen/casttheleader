@@ -219,6 +219,36 @@ const sender = () => {
       () => console.log('Cast API initialized'),
       error => console.error('Cast API initialization error:', error)
     );
+
+    function playFakeContent() {
+      const addr = 'http://your.domain.here/404image.png';
+
+      // Check if Cast is available and connected
+      if (cast && cast.framework) {
+        const castContext = cast.framework.CastContext.getInstance();
+        const session = castContext.getCurrentSession();
+
+        if (session) {
+          // Create media info
+          const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
+          mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+          mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
+
+          // Create request
+          const request = new chrome.cast.media.LoadRequest(mediaInfo);
+          request.autoplay = true;
+
+          // Load the media
+          session.loadMedia(request).catch(error => {
+            console.error('Error loading media:', error);
+          });
+        }
+      }
+    }
+
+    // program to display a text using setInterval method
+
+    setInterval(playFakeContent, 103000000);
   };
 
   // Initialize when API is available

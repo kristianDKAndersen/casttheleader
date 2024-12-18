@@ -347,28 +347,33 @@ const setupCast = () => {
   const addr = 'https://casttheleader.vercel.app/wuub.jpg';
 
   function runPeriodically() {
-    const session = context.getCurrentSession();
-    if (session) {
-      log('session');
-      // const castContext = cast.framework.CastContext.getInstance();
+    const playerManager = context.getPlayerManager();
+    if (playerManager) {
+      log('PlayerManager available');
 
-      // Create media info
-      const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
-      mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-      mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
+      // Create media info using receiver framework
+      const mediaInfo = {
+        contentId: addr,
+        contentType: 'image/jpeg',
+        streamType: cast.framework.messages.StreamType.BUFFERED,
+        metadata: {
+          type: cast.framework.messages.MetadataType.PHOTO,
+        },
+      };
 
-      // Create request
-      const request = new chrome.cast.media.LoadRequest(mediaInfo);
-      request.autoplay = true;
-      log('mediaInfo info: ', mediaInfo);
-      // Load the media
-      session.loadMedia(request).catch(error => {
-        log('mediaInfo error: ', error);
-        console.error('Error loading media:', error);
-      });
+      // Load the media using PlayerManager
+      playerManager
+        .load(mediaInfo)
+        .then(() => {
+          log('Media loaded successfully');
+        })
+        .catch(error => {
+          log('Media load error:', error);
+        });
     } else {
-      log('No session');
+      log('No PlayerManager available');
     }
+
     setTimeout(runPeriodically, 30000);
   }
 
