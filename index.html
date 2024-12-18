@@ -114,7 +114,7 @@
             }
         }
 
-        window.onload = () => {
+        initializeCastApi = () => {
             // Initialize Cast API
             cast.framework.CastContext.getInstance().setOptions({
                 receiverApplicationId: APP_ID,
@@ -154,6 +154,14 @@
             document.getElementById('playAudio').addEventListener('click', startPlayback);
             document.getElementById('stopAudio').addEventListener('click', stopPlayback);
         };
+
+    window['__onGCastApiAvailable'] = (loaded, errorInfo) => {
+    if (loaded) {
+      initializeCastApi();
+    } else {
+      console.error('Cast API load error:', errorInfo);
+    }
+  };
     </script>
 </body>
 </html>
