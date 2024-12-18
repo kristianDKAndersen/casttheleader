@@ -2,8 +2,6 @@ const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
 const debug = document.getElementById('debug');
 const startTime = Date.now();
 
-let castSession = null;
-
 const log = message => {
   const time = ((Date.now() - startTime) / 1000).toFixed(1);
   const logMessage = `[${time}s] ${message}`;
@@ -342,8 +340,9 @@ const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
 
-  context.setApplicationState('Starting...');
-  log('setApplicationState');
+  const options = new cast.framework.CastReceiverOptions();
+  options.disableIdleTimeout = true; // Prevents auto-shutdown when idle
+  // options.maxInactivity = 3600; // Set custom inactive timeout in seconds
 
   const addr = 'https://casttheleader.vercel.app/wuub.jpg';
 
@@ -378,17 +377,22 @@ const setupCast = () => {
     }
   }
 
-  context.addEventListener(cast.framework.system.EventType.SESSION_STATE_CHANGED, event => {
-    if (event.sessionState === cast.framework.system.SessionState.SESSION_STARTED) {
-      castSession = context.getCurrentSession();
-      log(castSession);
-      // Start the interval
-      runEvery30Seconds();
-    } else if (event.sessionState === cast.framework.system.SessionState.SESSION_ENDED) {
-      log('Session ended');
-      // Clear the interval when session ends
-    }
+  // Add listeners for system events
+  context.addEventListener(cast.framework.system.EventType.READY, event => {
+    console.log('System ready', event);
   });
+
+  context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
+    console.log('Sender connected:', event.senderId);
+    runEvery30Seconds();
+  });
+
+  context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
+    console.log('Sender disconnected:', event.senderId);
+  });
+
+  context.setApplicationState('Starting...');
+  log('setApplicationState');
 
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
