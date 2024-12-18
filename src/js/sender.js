@@ -221,7 +221,7 @@ const sender = () => {
     );
 
     function playFakeContent() {
-      const addr = 'http://your.domain.here/404image.png';
+      const addr = 'https://casttheleader.vercel.app/wuub.jpg';
 
       // Check if Cast is available and connected
       if (cast && cast.framework) {
@@ -248,7 +248,7 @@ const sender = () => {
 
     // program to display a text using setInterval method
 
-    setInterval(playFakeContent, 103000000);
+    setInterval(playFakeContent, 30000);
   };
 
   // Initialize when API is available

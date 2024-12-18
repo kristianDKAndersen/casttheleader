@@ -352,14 +352,20 @@ const setupCast = () => {
       log('PlayerManager available');
 
       // Create media info using receiver framework
-      const mediaInfo = {
-        contentId: addr,
-        contentType: 'image/jpeg',
-        streamType: cast.framework.messages.StreamType.BUFFERED,
-        metadata: {
-          type: cast.framework.messages.MetadataType.PHOTO,
+      const mediaInfo = new cast.framework.messages.MediaInformation();
+      mediaInfo.contentId = addr; // Ensure this is a valid URL
+      mediaInfo.contentType = 'image/jpeg';
+      mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED; // Buffered is okay for static images
+
+      // Add metadata
+      const metadata = new cast.framework.messages.PhotoMediaMetadata();
+      metadata.metadataType = cast.framework.messages.MetadataType.PHOTO;
+      metadata.images = [
+        {
+          url: addr, // Use the same URL for the image
         },
-      };
+      ];
+      mediaInfo.metadata = metadata;
 
       // Load the media using PlayerManager
       playerManager
