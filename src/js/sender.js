@@ -3,55 +3,99 @@ const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
 let castSession = null;
 let castContext = null;
 
+// Update status message
+function updateStatus(message) {
+  const status = document.getElementById('status');
+  status.textContent = `Status: ${  message}`;
+}
+
+// Initialize when page loads
 window.onload = function () {
   initializeCastApi();
 };
 
+// Initialize the Cast API
 function initializeCastApi() {
-  cast.framework.CastContext.getInstance().setOptions({
-    receiverApplicationId: APP_ID,
-    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
-  });
+  try {
+    const context = cast.framework.CastContext.getInstance();
+    context.setOptions({
+      receiverApplicationId: APP_ID,
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+    });
 
-  castContext = cast.framework.CastContext.getInstance();
-  castContext.addEventListener(
-    cast.framework.CastContextEventType.CAST_STATE_CHANGED,
-    handleCastStateChange
-  );
+    castContext = context;
 
-  document.getElementById('connectButton').addEventListener('click', connectToChromecast);
-  document.getElementById('castButton').addEventListener('click', castMedia);
-}
+    // Add event listeners
+    castContext.addEventListener(
+      cast.framework.CastContextEventType.CAST_STATE_CHANGED,
+      handleCastStateChange
+    );
 
-function handleCastStateChange(event) {
-  const status = document.getElementById('status');
-  switch (event.castState) {
-    case cast.framework.CastState.NO_DEVICES_AVAILABLE:
-      status.textContent = 'Status: No devices available';
-      break;
-    case cast.framework.CastState.NOT_CONNECTED:
-      status.textContent = 'Status: Not connected';
-      document.getElementById('castButton').disabled = true;
-      break;
-    case cast.framework.CastState.CONNECTED:
-      status.textContent = 'Status: Connected';
-      document.getElementById('castButton').disabled = false;
-      castSession = castContext.getCurrentSession();
-      break;
+    // Add button click handlers
+    document.getElementById('connectButton').addEventListener('click', connectToChromecast);
+    document.getElementById('castButton').addEventListener('click', castMedia);
+
+    updateStatus('Cast API initialized successfully');
+  } catch (error) {
+    updateStatus(`Error initializing Cast API: ${  error.message}`);
+    console.error('Cast initialization error:', error);
   }
 }
 
+// Handle Cast state changes
+function handleCastStateChange(event) {
+  const {castState} = event;
+
+  switch (castState) {
+    case cast.framework.CastState.NO_DEVICES_AVAILABLE:
+      updateStatus('No Chromecast devices found');
+      document.getElementById('castButton').disabled = true;
+      break;
+    case cast.framework.CastState.NOT_CONNECTED:
+      updateStatus('Ready to connect');
+      document.getElementById('castButton').disabled = true;
+      break;
+    case cast.framework.CastState.CONNECTING:
+      updateStatus('Connecting...');
+      document.getElementById('castButton').disabled = true;
+      break;
+    case cast.framework.CastState.CONNECTED:
+      castSession = castContext.getCurrentSession();
+      updateStatus(`Connected to ${  castSession.getCastDevice().friendlyName}`);
+      document.getElementById('castButton').disabled = false;
+      break;
+    default:
+      updateStatus(`Unknown cast state: ${  castState}`);
+      document.getElementById('castButton').disabled = true;
+  }
+}
+
+// Connect to Chromecast
 function connectToChromecast() {
+  updateStatus('Attempting to connect to Chromecast...');
   castContext
     .requestSession()
     .then(() => {
+      updateStatus('Connected successfully');
       console.log('Connected successfully');
     })
     .catch(error => {
-      console.error('Error connecting to Chromecast:', error);
+      let errorMessage = 'Error connecting to Chromecast: ';
+      if (error.code === 'cancel') {
+        errorMessage += 'Connection cancelled by user';
+      } else if (error.code === 'timeout') {
+        errorMessage += 'Connection timed out';
+      } else if (error.code === 'unavailable') {
+        errorMessage += 'No Chromecast devices found';
+      } else {
+        errorMessage += error.message || error.code || 'Unknown error';
+      }
+      updateStatus(errorMessage);
+      console.error('Chromecast connection error:', error);
     });
 }
 
+// Cast media to Chromecast
 function castMedia() {
   if (!castSession) {
     console.error('No cast session available');
@@ -78,5 +122,6 @@ function castMedia() {
     })
     .catch(error => {
       console.error('Error loading media:', error);
+      updateStatus(`Error loading media: ${  error.message}`);
     });
 }
