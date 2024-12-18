@@ -2,6 +2,8 @@ const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
 const debug = document.getElementById('debug');
 const startTime = Date.now();
 
+let castSession = null;
+
 const log = message => {
   const time = ((Date.now() - startTime) / 1000).toFixed(1);
   const logMessage = `[${time}s] ${message}`;
@@ -369,12 +371,22 @@ const setupCast = () => {
             console.error('Error loading media:', error);
           });
         }
+      } else {
+        log('No context');
       }
       await new Promise(resolve => setTimeout(resolve, 30000));
     }
   }
 
-  runEvery30Seconds();
+  context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, event => {
+    if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
+      castSession = context.getCurrentSession();
+      log(castSession);
+      runEvery30Seconds();
+    } else if (event.sessionState === cast.framework.SessionState.SESSION_ENDED) {
+      log('Session ended');
+    }
+  });
 
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
