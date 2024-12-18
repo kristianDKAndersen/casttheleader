@@ -336,32 +336,6 @@ const getShit = () => ({
   t: 'shit',
 });
 
-const playFakeContent = () => {
-  const addr = 'https://casttheleader.vercel.app/wuub.jpg';
-
-  // Check if Cast is available and connected
-  if (cast && cast.framework) {
-    const castContext = cast.framework.CastContext.getInstance();
-    const session = castContext.getCurrentSession();
-
-    if (session) {
-      // Create media info
-      const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
-      mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-      mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
-
-      // Create request
-      const request = new chrome.cast.media.LoadRequest(mediaInfo);
-      request.autoplay = true;
-
-      // Load the media
-      session.loadMedia(request).catch(error => {
-        console.error('Error loading media:', error);
-      });
-    }
-  }
-};
-
 const setupCast = () => {
   log('setupCast');
   const context = cast.framework.CastReceiverContext.getInstance();
@@ -369,23 +343,54 @@ const setupCast = () => {
   context.setApplicationState('Starting...');
   log('setApplicationState');
 
+  const addr = 'https://casttheleader.vercel.app/wuub.jpg';
+
+  async function runEvery30Seconds() {
+    log('Run mediaInfo');
+    while (true) {
+      // Check if Cast is available and connected
+      if (context) {
+        // const castContext = cast.framework.CastContext.getInstance();
+        const session = context.getCurrentSession();
+
+        if (session) {
+          // Create media info
+          const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
+          mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+          mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
+
+          // Create request
+          const request = new chrome.cast.media.LoadRequest(mediaInfo);
+          request.autoplay = true;
+          log('mediaInfo info: ', mediaInfo);
+          // Load the media
+          session.loadMedia(request).catch(error => {
+            log('mediaInfo error: ', error);
+            console.error('Error loading media:', error);
+          });
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 30000));
+    }
+  }
+
+  runEvery30Seconds();
+
   context.addCustomMessageListener(NAMESPACE, event => {
     update(event.data);
 
     // Check if it's a ping message
     if (event.data.type === 'ping') {
-      log('Received ping, sending pong');
+      //log('Received ping, sending pong');
       context.sendCustomMessage(NAMESPACE, event.senderId, {
         type: 'pong',
         timestamp: Date.now(),
       });
 
-      playFakeContent();
-
       return; // Exit early for ping messages
     }
     if (event.data.type === 'heartbeat') {
-      console.log('Heartbeat message received:', event.data.message);
+      // console.log('Heartbeat message received:', event.data.message);
 
       // Respond to the heartbeat to acknowledge
       context.sendCustomMessage(NAMESPACE, event.senderId, { type: 'heartbeat', message: 'pong' });
