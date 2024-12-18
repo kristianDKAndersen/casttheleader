@@ -346,32 +346,30 @@ const setupCast = () => {
 
   const addr = 'https://casttheleader.vercel.app/wuub.jpg';
 
-  async function runEvery30Seconds() {
-    while (true) {
-      const session = context.getCurrentSession();
-      if (session) {
-        log('session');
-        // const castContext = cast.framework.CastContext.getInstance();
+  function runPeriodically() {
+    const session = context.getCurrentSession();
+    if (session) {
+      log('session');
+      // const castContext = cast.framework.CastContext.getInstance();
 
-        // Create media info
-        const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
-        mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-        mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
+      // Create media info
+      const mediaInfo = new chrome.cast.media.MediaInfo(addr, 'image/png');
+      mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+      mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
 
-        // Create request
-        const request = new chrome.cast.media.LoadRequest(mediaInfo);
-        request.autoplay = true;
-        log('mediaInfo info: ', mediaInfo);
-        // Load the media
-        session.loadMedia(request).catch(error => {
-          log('mediaInfo error: ', error);
-          console.error('Error loading media:', error);
-        });
-      } else {
-        log('No session');
-      }
-      await new Promise(resolve => setTimeout(resolve, 30000));
+      // Create request
+      const request = new chrome.cast.media.LoadRequest(mediaInfo);
+      request.autoplay = true;
+      log('mediaInfo info: ', mediaInfo);
+      // Load the media
+      session.loadMedia(request).catch(error => {
+        log('mediaInfo error: ', error);
+        console.error('Error loading media:', error);
+      });
+    } else {
+      log('No session');
     }
+    setTimeout(runPeriodically, 30000);
   }
 
   // Add listeners for system events
@@ -381,7 +379,7 @@ const setupCast = () => {
 
   context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
     log('Sender connected:', event.senderId);
-    runEvery30Seconds();
+    runPeriodically();
   });
 
   context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
