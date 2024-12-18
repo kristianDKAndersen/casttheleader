@@ -1,4 +1,163 @@
 <!DOCTYPE html>
+<html>
+<head>
+    <title>Chromecast Audio Sender</title>
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+    <style>
+        .controls {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="castButton">Connect to Chromecast</button>
+        <button id="playAudio" disabled>Play Audio</button>
+        <button id="stopAudio" disabled>Stop</button>
+    </div>
+    
+    <script>
+        const APP_ID = '64F29018';
+        const NAMESPACE = 'urn:x-cast:com.screeninfo.app';
+        const AUDIO_URL = 'https://casttheleader.vercel.app/silence15.mp3';
+        
+        let castSession = null;
+        let currentMediaSession = null;
+        let reloadTimer = null;
+
+        // Function to reload media while maintaining playback position
+        function reloadMedia() {
+            if (castSession) {
+                // Store current playback state
+                const wasPlaying = currentMediaSession && 
+                    currentMediaSession.playerState === chrome.cast.media.PlayerState.PLAYING;
+                const currentTime = currentMediaSession ? currentMediaSession.getEstimatedTime() : 0;
+
+                // Create new media info
+                const mediaInfo = new chrome.cast.media.MediaInfo(AUDIO_URL, 'audio/mp3');
+                mediaInfo.metadata = new chrome.cast.media.MusicTrackMediaMetadata();
+                mediaInfo.metadata.title = 'Background Audio';
+                
+                // Set starting position
+                const request = new chrome.cast.media.LoadRequest(mediaInfo);
+                request.currentTime = currentTime;
+
+                // Load media and restore playback
+                castSession.loadMedia(request).then(
+                    function(mediaSession) {
+                        currentMediaSession = mediaSession;
+                        if (wasPlaying) {
+                            mediaSession.play();
+                        }
+                    },
+                    function(errorCode) {
+                        console.log('Error reloading media: ' + errorCode);
+                    }
+                );
+            }
+        }
+
+        // Function to start playback and reload timer
+        function startPlayback() {
+            if (castSession) {
+                const mediaInfo = new chrome.cast.media.MediaInfo(AUDIO_URL, 'audio/mp3');
+                mediaInfo.metadata = new chrome.cast.media.MusicTrackMediaMetadata();
+                mediaInfo.metadata.title = 'Background Audio';
+                
+                const request = new chrome.cast.media.LoadRequest(mediaInfo);
+                
+                castSession.loadMedia(request).then(
+                    function(mediaSession) {
+                        currentMediaSession = mediaSession;
+                        document.getElementById('playAudio').disabled = true;
+                        document.getElementById('stopAudio').disabled = false;
+                        
+                        // Start reload timer
+                        if (reloadTimer) {
+                            clearInterval(reloadTimer);
+                        }
+                        reloadTimer = setInterval(reloadMedia, 30000); // 30 seconds
+                    },
+                    function(errorCode) {
+                        console.log('Error loading media: ' + errorCode);
+                    }
+                );
+            }
+        }
+
+        // Function to stop playback and clear timer
+        function stopPlayback() {
+            if (currentMediaSession) {
+                currentMediaSession.stop(null,
+                    function() {
+                        document.getElementById('playAudio').disabled = false;
+                        document.getElementById('stopAudio').disabled = true;
+                        
+                        // Clear reload timer
+                        if (reloadTimer) {
+                            clearInterval(reloadTimer);
+                            reloadTimer = null;
+                        }
+                    },
+                    function(error) {
+                        console.log('Error stopping: ' + error);
+                    }
+                );
+            }
+        }
+
+        window.onload = () => {
+            // Initialize Cast API
+            cast.framework.CastContext.getInstance().setOptions({
+                receiverApplicationId: APP_ID,
+                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
+
+            // Initialize cast button
+            const context = cast.framework.CastContext.getInstance();
+            const button = new cast.framework.CastButtonComponent();
+            document.getElementById('castButton').appendChild(button);
+
+            // Session management
+            context.addEventListener(
+                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+                event => {
+                    switch(event.sessionState) {
+                        case cast.framework.SessionState.SESSION_STARTED:
+                        case cast.framework.SessionState.SESSION_RESUMED:
+                            castSession = context.getCurrentSession();
+                            document.getElementById('playAudio').disabled = false;
+                            break;
+                        case cast.framework.SessionState.SESSION_ENDED:
+                            castSession = null;
+                            currentMediaSession = null;
+                            document.getElementById('playAudio').disabled = true;
+                            document.getElementById('stopAudio').disabled = true;
+                            if (reloadTimer) {
+                                clearInterval(reloadTimer);
+                                reloadTimer = null;
+                            }
+                            break;
+                    }
+                }
+            );
+
+            // Add click handlers
+            document.getElementById('playAudio').addEventListener('click', startPlayback);
+            document.getElementById('stopAudio').addEventListener('click', stopPlayback);
+        };
+    </script>
+</body>
+</html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="icon" href="data:,">
@@ -6,7 +165,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cast the leader V1</title>
 
-<!--   -->
+
   <script src="https://cdn.tailwindcss.com"></script>
  <link rel="stylesheet" href="src/css/style.css">
  
@@ -41,10 +200,10 @@
                     
                     <section class="flex flex-col w-full theInputcontainer">
                             
-                            <!--<div class="flex flex-row justify-evenly items-center" style="order: 1;">
+                            <div class="flex flex-row justify-evenly items-center" style="order: 1;">
                                 <input type="url" class="m-1 border bg-white rounded-lg p-2 w-5/6" placeholder="Enter URL (e.g., example.com)"  url="" data-id="index">
                                 <div role="button" class="addremove rounded-full bg-white w-8 h-8 text-center text-black flex justify-center items-center font-bold"> - </div>
-                            </div>-->
+                            </div>
                         </section>
                         
                         <section class="flex flex-row w-full justify-between "></section>
@@ -57,3 +216,4 @@
  <script type="module" src="main.js"></script>
 </body>
 </html>
+-->

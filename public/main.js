@@ -344,43 +344,23 @@ const setupCast = () => {
   options.disableIdleTimeout = true; // Prevents auto-shutdown when idle
   // options.maxInactivity = 3600; // Set custom inactive timeout in seconds
 
-  const addr = 'https://casttheleader.vercel.app/wuub.jpg';
+  const playerManager = context.getPlayerManager();
 
-  function runPeriodically() {
-    const playerManager = context.getPlayerManager();
-    if (playerManager) {
-      log('PlayerManager available');
+  if (playerManager) {
+    console.log('PlayerManager available');
 
-      // Create media info using receiver framework
-      const mediaInfo = new cast.framework.messages.MediaInformation();
-      mediaInfo.contentId = addr; // Ensure this is a valid URL
-      mediaInfo.contentType = 'image/jpeg';
-      mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED; // Buffered is okay for static images
+    // Intercept LOAD requests to log media details
+    playerManager.setMessageInterceptor(
+      cast.framework.messages.MessageType.LOAD,
+      loadRequestData => {
+        log('LOAD request received:', loadRequestData);
+        return loadRequestData; // Proceed with default handling
+      }
+    );
 
-      // Add metadata
-      const metadata = new cast.framework.messages.PhotoMediaMetadata();
-      metadata.metadataType = cast.framework.messages.MetadataType.PHOTO;
-      metadata.images = [
-        {
-          url: addr, // Use the same URL for the image
-        },
-      ];
-      mediaInfo.metadata = metadata;
-
-      // Load the media using PlayerManager
-      playerManager
-        .load(mediaInfo)
-        .then(() => {
-          log('Media loaded successfully');
-        })
-        .catch(error => {
-          log('Media load error:', error);
-        });
-    } else {
-      log('No PlayerManager available');
-    }
-
-    setTimeout(runPeriodically, 30000);
+    context.start(); // Start the receiver context
+  } else {
+    console.error('No PlayerManager available');
   }
 
   // Add listeners for system events
@@ -390,7 +370,6 @@ const setupCast = () => {
 
   context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
     log('Sender connected:', event.senderId);
-    runPeriodically();
   });
 
   context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {

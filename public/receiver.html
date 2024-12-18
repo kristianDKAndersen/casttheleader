@@ -1,3 +1,71 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chromecast Audio Receiver</title>
+    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .audio-info {
+            text-align: center;
+            margin: 20px;
+        }
+        .title {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .artist {
+            font-size: 1.5em;
+            color: #aaa;
+        }
+        cast-media-player {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <cast-media-player></cast-media-player>
+    
+    <script>
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const playerManager = context.getPlayerManager();
+
+        // Configure player settings
+        const playbackConfig = new cast.framework.PlaybackConfig();
+        playbackConfig.autoResumeDuration = 5;
+        context.setPlaybackConfig(playbackConfig);
+
+        // Handle media status updates
+        playerManager.addEventListener(
+            cast.framework.events.EventType.MEDIA_STATUS, 
+            event => {
+                console.log('Media status updated:', event);
+            }
+        );
+
+        // Configure player to show audio metadata
+        const playerData = new cast.framework.ui.PlayerData();
+        const playerDataBinder = new cast.framework.ui.PlayerDataBinder(playerData);
+
+        // Start the receiver
+        context.start();
+    </script>
+</body>
+</html>
+<!--
 <!DOCTYPE html>
 <html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,4 +128,4 @@
 <script type="module" src="./main.js"></script>
 
 </body>
-</html>
+</html>-->
