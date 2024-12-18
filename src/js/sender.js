@@ -6,12 +6,16 @@ let castContext = null;
 // Update status message
 function updateStatus(message) {
   const status = document.getElementById('status');
-  status.textContent = `Status: ${  message}`;
+  status.textContent = `Status: ${message}`;
 }
 
-// Initialize when page loads
-window.onload = function () {
-  initializeCastApi();
+// Initialize when API is available
+window['__onGCastApiAvailable'] = (loaded, errorInfo) => {
+  if (loaded) {
+    initializeCastApi();
+  } else {
+    console.error('Cast API load error:', errorInfo);
+  }
 };
 
 // Initialize the Cast API
@@ -37,14 +41,14 @@ function initializeCastApi() {
 
     updateStatus('Cast API initialized successfully');
   } catch (error) {
-    updateStatus(`Error initializing Cast API: ${  error.message}`);
+    updateStatus(`Error initializing Cast API: ${error.message}`);
     console.error('Cast initialization error:', error);
   }
 }
 
 // Handle Cast state changes
 function handleCastStateChange(event) {
-  const {castState} = event;
+  const { castState } = event;
 
   switch (castState) {
     case cast.framework.CastState.NO_DEVICES_AVAILABLE:
@@ -61,11 +65,11 @@ function handleCastStateChange(event) {
       break;
     case cast.framework.CastState.CONNECTED:
       castSession = castContext.getCurrentSession();
-      updateStatus(`Connected to ${  castSession.getCastDevice().friendlyName}`);
+      updateStatus(`Connected to ${castSession.getCastDevice().friendlyName}`);
       document.getElementById('castButton').disabled = false;
       break;
     default:
-      updateStatus(`Unknown cast state: ${  castState}`);
+      updateStatus(`Unknown cast state: ${castState}`);
       document.getElementById('castButton').disabled = true;
   }
 }
@@ -122,6 +126,6 @@ function castMedia() {
     })
     .catch(error => {
       console.error('Error loading media:', error);
-      updateStatus(`Error loading media: ${  error.message}`);
+      updateStatus(`Error loading media: ${error.message}`);
     });
 }
