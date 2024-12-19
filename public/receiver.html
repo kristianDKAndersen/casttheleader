@@ -67,9 +67,11 @@
 
 
         const context = cast.framework.CastReceiverContext.getInstance();
-        context.setInactivityTimeout(0); 
+     
+        
         const options = new cast.framework.CastReceiverOptions();
-        options.disableIdleTimeout = true; 
+        options.disableIdleTimeout = true;
+        options.maxInactivity = 0;
 
  
 
