@@ -1,126 +1,61 @@
-
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Chromecast Audio Receiver</title>
-    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .audio-info {
-            text-align: center;
-            margin: 20px;
-        }
-        .title {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        .artist {
-            font-size: 1.5em;
-            color: #aaa;
-        }
-        cast-media-player {
-            width: 100%;
-            height: 100%;
-        }
-        #debug {
-            
-            color: #fff;
-            z-index: 1000;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 90%;
-            word-wrap: break-word;
-            font-size: 10px;
-        }
+  <head>
+    <title>URL Cast Receiver</title>
+
+    <style type='text/css'>
+      html, body {width: 100%; height: 100%; padding: 0; margin: 0;}
+      body {overflow:hidden; background: #FFF;}
+      #iframe {width: 100%; height: 100%;}
     </style>
-</head>
-<body>
-    <div id="debug">Starting...</div>
-    <cast-media-player id="buttfarts" ></cast-media-player>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+  </head>
 
-            const debug = document.getElementById('debug');
-            
-            const log = message => {
-                const time = ((Date.now() - startTime) / 1000).toFixed(1);
-                const logMessage = `[${time}s] ${message}`;
+  <body>
+    <iframe src='' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' seamless='seamless' id='iframe'></iframe>
 
-                debug.innerHTML = `${logMessage}<br>${debug.innerHTML}`;
-            };
+  
+    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>     
 
+    <script type='text/javascript'>
+      window.onload = function() {
+        window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
 
-       
-     
-        
-        const options = new cast.framework.CastReceiverOptions();
-        options.disableIdleTimeout = true;
-        options.maxInactivity = 0;
+        castReceiverManager.onReady = function(event) {
+          window.castReceiverManager.setApplicationState('URL Cast ready...');
+        };
 
-        const context = cast.framework.CastReceiverContext.getInstance();
+        // messages on a custom namespace
+        var ns = 'urn:x-cast:com.url.cast';
+        window.messageBus = window.castReceiverManager.getCastMessageBus(ns);
 
+        window.messageBus.onMessage = function(e) {
+          var msg = JSON.parse(e.data);
 
+          window.messageBus.send(e.senderId, 'ok');
 
-    
- 
+          if (msg.type === 'iframe') updateFrame(msg.url);
+          if (msg.type === 'loc') updateLocation(msg.url);
+        };
 
+        // initialize CastReceiverManager
+        window.castReceiverManager.start({statusText: 'URL Cast starting...'});
+      };
 
-        const playerManager = context.getPlayerManager();
+      // Update the iframe src
+      // warning: watch out for X-Frame-Options -> DENY
+      function updateFrame(url) {
+        window.castReceiverManager.setApplicationState('Now Playing: ' + url);
+        document.getElementById('iframe').src = url;
+      }
 
-        // Configure player settings
-        const playbackConfig = new cast.framework.PlaybackConfig();
-        playbackConfig.autoResumeDuration = 5;
-        context.setPlaybackConfig(playbackConfig);
-
-        // Handle media status updates
-        playerManager.addEventListener(
-            cast.framework.events.EventType.MEDIA_STATUS, 
-            event => {
-               log('Media status updated:', event);
-            }
-        );
-
-        // Configure player to show audio metadata
-        const playerData = new cast.framework.ui.PlayerData();
-        const playerDataBinder = new cast.framework.ui.PlayerDataBinder(playerData);
-
-        
-
-
-        context.addEventListener(cast.framework.system.EventType.READY, event => {
-            log('System ready', event);
-        });
-
-        context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
-            log('Sender connected:', event.senderId);
-        });
-
-        context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
-            log('Sender disconnected:', event.senderId);
-        });
-        // Start the receiver
-        context.start(options);
-        });
-
+      // Set the window location to the URL
+      // warning: this reciever dies essentially, because you navigated away
+      function updateLocation(url) {
+        window.castReceiverManager.setApplicationState('Now Playing: ' + url);
+        window.location.href = url;
+      }
     </script>
-</body>
+  </body>
 </html>
 <!--
 <!DOCTYPE html>
@@ -180,7 +115,7 @@
     <div id="debug">Starting...</div>
 
     <footer class="flex w-full flex-row items-center justify-center bg-green text-white"><div id="fi">*</div></footer>
- <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>          <!-- Cast Debug Logger -->
+ <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>          
 <script src="//www.gstatic.com/cast/sdk/libs/devtools/debug_layer/caf_receiver_logger.js"></script>
 <script type="module" src="./main.js"></script>
 
