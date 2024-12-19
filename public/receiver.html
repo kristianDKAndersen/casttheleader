@@ -74,6 +74,23 @@
         options.maxInactivity = 0;
 
  
+        context.addCustomMessageListener(NAMESPACE, (event) => {
+            if (event.data.type === 'activityPing') {
+                log('Received activity ping');
+                // Force player to "interact" by slightly adjusting the playback rate and reverting
+                const player = playerManager.getPlayerState();
+                if (player) {
+                    const currentRate = playerManager.getPlaybackRate();
+                    playerManager.setPlaybackRate(currentRate + 0.01);
+                    setTimeout(() => {
+                        playerManager.setPlaybackRate(currentRate);
+                    }, 100);
+                    
+                    // Also try updating media status
+                    context.setApplicationState('Active playback');
+                }
+            }
+        });
 
         const playerManager = context.getPlayerManager();
 

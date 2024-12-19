@@ -184,6 +184,19 @@ console.log("poop")
                 }
             );
           
+            function sendActivityPing() {
+                castSession = castContext.getCurrentSession();
+            if (castSession) {
+                castSession.sendMessage(NAMESPACE, {
+                    type: 'activityPing',
+                    timestamp: Date.now()
+                });
+            }
+        }
+
+// Send activity ping every 8 minutes (before the 10-minute background trigger)
+setInterval(sendActivityPing, 480000);
+
 
             console.log(castButton)
 
