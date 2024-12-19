@@ -77,6 +77,40 @@
 
     
  
+
+
+        const playerManager = context.getPlayerManager();
+
+        // Configure player settings
+        const playbackConfig = new cast.framework.PlaybackConfig();
+        playbackConfig.autoResumeDuration = 5;
+        context.setPlaybackConfig(playbackConfig);
+
+        // Handle media status updates
+        playerManager.addEventListener(
+            cast.framework.events.EventType.MEDIA_STATUS, 
+            event => {
+               log('Media status updated:', event);
+            }
+        );
+
+        // Configure player to show audio metadata
+        const playerData = new cast.framework.ui.PlayerData();
+        const playerDataBinder = new cast.framework.ui.PlayerDataBinder(playerData);
+
+        context.addEventListener(cast.framework.system.EventType.READY, event => {
+            log('System ready', event);
+        });
+
+        context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
+            log('Sender connected:', event.senderId);
+        });
+
+        context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
+            log('Sender disconnected:', event.senderId);
+        });
+
+
         context.addCustomMessageListener(NAMESPACE, (event) => {
             log('thetype:', event.data.type);
 
@@ -99,37 +133,7 @@
             }
         });
 
-        const playerManager = context.getPlayerManager();
-
-        // Configure player settings
-        const playbackConfig = new cast.framework.PlaybackConfig();
-        playbackConfig.autoResumeDuration = 5;
-        context.setPlaybackConfig(playbackConfig);
-
-        // Handle media status updates
-        playerManager.addEventListener(
-            cast.framework.events.EventType.MEDIA_STATUS, 
-            event => {
-                console.log('Media status updated:', event);
-            }
-        );
-
-        // Configure player to show audio metadata
-        const playerData = new cast.framework.ui.PlayerData();
-        const playerDataBinder = new cast.framework.ui.PlayerDataBinder(playerData);
-
-        context.addEventListener(cast.framework.system.EventType.READY, event => {
-            log('System ready', event);
-        });
-
-        context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
-            log('Sender connected:', event.senderId);
-        });
-
-        context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
-            log('Sender disconnected:', event.senderId);
-        });
-
+        
         // Start the receiver
         context.start(options);
         });
