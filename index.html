@@ -90,7 +90,7 @@ console.log("poop")
 
 
             function sendKeepAliveMedia() {
-    if (castSession) {
+   
         const mediaInfo = new chrome.cast.media.MediaInfo('https://dummy-image.png', 'image/png');
         mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
         
@@ -99,10 +99,8 @@ console.log("poop")
             // We expect this to fail, it's just to keep the session active
             console.log('Keep-alive media attempted');
         });
-    }else{
-        console.log('No cast session available.');
-    }
-}
+  
+        }
 
 // Send keep-alive every 1,6 minutes 
 setInterval(sendKeepAliveMedia, 100000);
