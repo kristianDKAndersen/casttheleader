@@ -90,7 +90,7 @@ console.log("poop")
 
 
             function sendKeepAliveMedia() {
-   
+   console.log('sendKeepAliveMedia')
         const mediaInfo = new chrome.cast.media.MediaInfo('https://dummy-image.png', 'image/png');
         mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
         
@@ -102,8 +102,7 @@ console.log("poop")
   
         }
 
-// Send keep-alive every 1,6 minutes 
-setInterval(sendKeepAliveMedia, 100000);
+setInterval(sendKeepAliveMedia, 20000);
 
 
 
