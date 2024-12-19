@@ -89,29 +89,23 @@ console.log("poop")
             playButton.disabled = false;
 
 
-            function sendActivityPing() {
-                console.log("sendActivityPing function called")
-               
-            if (castSession) {
-                
-                console.log('Sending activity ping');
-                const message = {
-                    type: 'activityPing',
-                    timestamp: Date.now(),
-                };
+            function sendKeepAliveMedia() {
+    if (castSession) {
+        const mediaInfo = new chrome.cast.media.MediaInfo('https://dummy-image.png', 'image/png');
+        mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
+        
+        const request = new chrome.cast.media.LoadRequest(mediaInfo);
+        castSession.loadMedia(request).catch(error => {
+            // We expect this to fail, it's just to keep the session active
+            console.log('Keep-alive media attempted');
+        });
+    }else{
+        console.log('No cast session available.');
+    }
+}
 
-                castSession.sendMessage(NAMESPACE,JSON.stringify( message ), () => {
-                    console.log('Activity ping sent');
-                }, error => {
-                    console.error('Error sending activity ping:', error);
-                });
-            }else{
-                console.log("wuut")
-            }
-        }
-
-        // Send activity ping every 24 seconds
-setInterval(sendActivityPing, 24000);
+// Send keep-alive every 1,6 minutes 
+setInterval(sendKeepAliveMedia, 100000);
 
 
 

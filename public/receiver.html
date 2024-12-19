@@ -100,27 +100,6 @@
 
         
 
-        context.addCustomMessageListener(NAMESPACE, (event) => {
-            log('the - type:', event.data.type);
-
-            if (event.data.type === 'activityPing') {
-                log('Received activity ping');
-                // Force player to "interact" by slightly adjusting the playback rate and reverting
-                const player = playerManager.getPlayerState();
-                if (player) {
-                    const currentRate = playerManager.getPlaybackRate();
-                    playerManager.setPlaybackRate(currentRate + 0.01);
-                    setTimeout(() => {
-                        playerManager.setPlaybackRate(currentRate);
-                    }, 100);
-                    
-                    // Also try updating media status
-                    context.setApplicationState('Active playback');
-                }
-            }else{
-                log('Received unknown message');
-            }
-        });
 
         context.addEventListener(cast.framework.system.EventType.READY, event => {
             log('System ready', event);
