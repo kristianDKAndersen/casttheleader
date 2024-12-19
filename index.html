@@ -42,36 +42,41 @@ console.log("poop")
 
 
         // Function to reload m edia while maintaining playback position
-        function reloadMedia() {
-            if (castSession) {
-                // Store current playback state
-                const wasPlaying = currentMediaSession && 
-                    currentMediaSession.playerState === chrome.cast.media.PlayerState.PLAYING;
-                const currentTime = currentMediaSession ? currentMediaSession.getEstimatedTime() : 0;
+        async function reloadMedia() {
+    if (!castSession) {
+        console.log('No cast session available.');
+        return;
+    }
 
-                // Create new media info
-                const mediaInfo = new chrome.cast.media.MediaInfo(AUDIO_URL, 'audio/mp3');
-                mediaInfo.metadata = new chrome.cast.media.MusicTrackMediaMetadata();
-                mediaInfo.metadata.title = 'Background Audio';
-                
-                // Set starting position
-                const request = new chrome.cast.media.LoadRequest(mediaInfo);
-                request.currentTime = currentTime;
+    try {
+        // Store current playback state
+        const wasPlaying = currentMediaSession &&
+            currentMediaSession.playerState === chrome.cast.media.PlayerState.PLAYING;
+        const currentTime = currentMediaSession ? currentMediaSession.getEstimatedTime() : 0;
 
-                // Load media and restore playback
-                castSession.loadMedia(request).then(
-                    function(mediaSession) {
-                        currentMediaSession = mediaSession;
-                        if (wasPlaying) {
-                            mediaSession.play();
-                        }
-                    },
-                    function(errorCode) {
-                        console.log('Error reloading media: ' + errorCode);
-                    }
-                );
-            }
+        // Create new media info
+        const mediaInfo = new chrome.cast.media.MediaInfo(AUDIO_URL, 'audio/mp3');
+        mediaInfo.metadata = new chrome.cast.media.MusicTrackMediaMetadata();
+        mediaInfo.metadata.title = 'Background Audio';
+
+        // Set starting position
+        const request = new chrome.cast.media.LoadRequest(mediaInfo);
+        request.currentTime = currentTime;
+
+        // Load media and restore playback
+        const mediaSession = await castSession.loadMedia(request);
+
+        currentMediaSession = mediaSession;
+
+        // If the media was playing before, resume playback
+        if (wasPlaying) {
+            await mediaSession.play();
         }
+    } catch (error) {
+        console.error('Error reloading media:', error);
+    }
+}
+
 
         
         const connectCast = async () => {
@@ -90,32 +95,36 @@ console.log("poop")
 
 
         // Function to start playback and reload timer
-        function startPlayback() {
-            if (castSession) {
-                const mediaInfo = new chrome.cast.media.MediaInfo(AUDIO_URL, 'audio/mp3');
-                mediaInfo.metadata = new chrome.cast.media.MusicTrackMediaMetadata();
-                mediaInfo.metadata.title = 'Background Audio';
-                
-                const request = new chrome.cast.media.LoadRequest(mediaInfo);
-                
-                castSession.loadMedia(request).then(
-                    function(mediaSession) {
-                        currentMediaSession = mediaSession;
-                        document.getElementById('playAudio').disabled = true;
-                        document.getElementById('stopAudio').disabled = false;
-                        
-                        // Start reload timer
-                        if (reloadTimer) {
-                            clearInterval(reloadTimer);
-                        }
-                        reloadTimer = setInterval(reloadMedia, 30000); // 30 seconds
-                    },
-                    function(errorCode) {
-                        console.log('Error loading media: ' + errorCode);
-                    }
-                );
-            }
+        async function startPlayback() {
+    if (!castSession) {
+        console.log('No cast session available.');
+        return;
+    }
+
+    try {
+        const mediaInfo = new chrome.cast.media.MediaInfo(AUDIO_URL, 'audio/mp3');
+        mediaInfo.metadata = new chrome.cast.media.MusicTrackMediaMetadata();
+        mediaInfo.metadata.title = 'Background Audio';
+
+        const request = new chrome.cast.media.LoadRequest(mediaInfo);
+
+        // Await the loadMedia method
+        const mediaSession = await castSession.loadMedia(request);
+
+        currentMediaSession = mediaSession;
+        document.getElementById('playAudio').disabled = true;
+        document.getElementById('stopAudio').disabled = false;
+
+        // Start reload timer
+        if (reloadTimer) {
+            clearInterval(reloadTimer);
         }
+        reloadTimer = setInterval(reloadMedia, 100000); // 30 seconds
+    } catch (error) {
+        console.error('Error loading media:', error);
+    }
+}
+
 
         // Function to stop playback and clear timer
         function stopPlayback() {

@@ -67,6 +67,14 @@
 
 
         const context = cast.framework.CastReceiverContext.getInstance();
+
+        const options = new cast.framework.CastReceiverOptions();
+        options.disableIdleTimeout = true; 
+
+        const idleConfig = new cast.framework.system.IdleConfig();
+        idleConfig.idleTimeout = 0;
+        context.setIdleConfig(idleConfig);
+
         const playerManager = context.getPlayerManager();
 
         // Configure player settings
