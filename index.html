@@ -95,10 +95,11 @@ console.log("poop")
         mediaInfo.metadata = new chrome.cast.media.PhotoMediaMetadata();
         
         const request = new chrome.cast.media.LoadRequest(mediaInfo);
-        castSession.loadMedia(request).catch(error => {
-            // We expect this to fail, it's just to keep the session active
-            console.log('Keep-alive media attempted');
-        });
+        try {
+                 castSession.loadMedia(loadRequest);
+                } catch(e) {
+                console.error(e);
+                }
   
         }
 
