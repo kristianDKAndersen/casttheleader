@@ -17,43 +17,55 @@
     <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>     
 
     <script type='text/javascript'>
-      window.onload = function() {
-        window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+   window.onload = function() {
+  const context = cast.framework.CastReceiverContext.getInstance();
+  const options = new cast.framework.CastReceiverOptions();
+  
+  // Set initial options
+  options.customNamespaces = {
+    'urn:x-cast:com.screeninfo.app': cast.framework.system.MessageType.JSON
+  };
+  
+  // Handle ready state
+  context.addEventListener(cast.framework.system.EventType.READY, event => {
+    context.setApplicationState('URL Cast ready...');
+  });
 
-        castReceiverManager.onReady = function(event) {
-          window.castReceiverManager.setApplicationState('URL Cast ready...');
-        };
+  // Handle custom messages
+  context.addCustomMessageListener('urn:x-cast:com.screeninfo.app', event => {
+    const message = event.data;
+    
+    // Send acknowledgment
+    context.sendCustomMessage('urn:x-cast:com.screeninfo.app', event.senderId, 'ok');
 
-        // messages on a custom namespace
-        var ns = 'urn:x-cast:com.url.cast';
-        window.messageBus = window.castReceiverManager.getCastMessageBus(ns);
+    // Handle different message types
+    if (message.type === 'iframe') {
+      updateFrame(message.url);
+    }
+    if (message.type === 'loc') {
+      updateLocation(message.url);
+    }
+  });
 
-        window.messageBus.onMessage = function(e) {
-          var msg = JSON.parse(e.data);
+  // Start the receiver
+  context.start(options);
+};
 
-          window.messageBus.send(e.senderId, 'ok');
+// Update the iframe src
+// warning: watch out for X-Frame-Options -> DENY
+function updateFrame(url) {
+  const context = cast.framework.CastReceiverContext.getInstance();
+  context.setApplicationState('Now Playing: ' + url);
+  document.getElementById('iframe').src = url;
+}
 
-          if (msg.type === 'iframe') updateFrame(msg.url);
-          if (msg.type === 'loc') updateLocation(msg.url);
-        };
-
-        // initialize CastReceiverManager
-        window.castReceiverManager.start({statusText: 'URL Cast starting...'});
-      };
-
-      // Update the iframe src
-      // warning: watch out for X-Frame-Options -> DENY
-      function updateFrame(url) {
-        window.castReceiverManager.setApplicationState('Now Playing: ' + url);
-        document.getElementById('iframe').src = url;
-      }
-
-      // Set the window location to the URL
-      // warning: this reciever dies essentially, because you navigated away
-      function updateLocation(url) {
-        window.castReceiverManager.setApplicationState('Now Playing: ' + url);
-        window.location.href = url;
-      }
+// Set the window location to the URL
+// warning: this receiver dies essentially, because you navigated away
+function updateLocation(url) {
+  const context = cast.framework.CastReceiverContext.getInstance();
+  context.setApplicationState('Now Playing: ' + url);
+  window.location.href = url;
+}
     </script>
   </body>
 </html>
