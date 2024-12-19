@@ -58,11 +58,12 @@
         document.addEventListener('DOMContentLoaded', () => {
 
             const debug = document.getElementById('debug');
+            
             const log = message => {
-            const time = ((Date.now() - startTime) / 1000).toFixed(1);
-            const logMessage = `[${time}s] ${message}`;
+                const time = ((Date.now() - startTime) / 1000).toFixed(1);
+                const logMessage = `[${time}s] ${message}`;
 
-            debug.innerHTML = `${logMessage}<br>${debug.innerHTML}`;
+                debug.innerHTML = `${logMessage}<br>${debug.innerHTML}`;
             };
 
 
@@ -73,8 +74,12 @@
         options.disableIdleTimeout = true;
         options.maxInactivity = 0;
 
+
+    
  
         context.addCustomMessageListener(NAMESPACE, (event) => {
+            log('thetype:', event.data.type);
+
             if (event.data.type === 'activityPing') {
                 log('Received activity ping');
                 // Force player to "interact" by slightly adjusting the playback rate and reverting
@@ -89,6 +94,8 @@
                     // Also try updating media status
                     context.setApplicationState('Active playback');
                 }
+            }else{
+                log('Received unknown message');
             }
         });
 
