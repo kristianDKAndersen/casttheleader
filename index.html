@@ -87,6 +87,32 @@ console.log("poop")
         if(castSession){
             stopButton.disabled = false;
             playButton.disabled = false;
+
+
+
+
+
+            function sendActivityPing() {
+                console.log("sendActivityPing function called")
+                castSession = castContext.getCurrentSession();
+            if (castSession) {
+                
+                console.log('Sending activity ping');
+
+                castSession.sendMessage(NAMESPACE, {
+                    type: 'activityPing',
+                    timestamp: Date.now()
+                });
+            }else{
+                console.log("wuut")
+            }
+        }
+
+// Send activity ping every 8 minutes (before the 10-minute background trigger)
+setInterval(sendActivityPing, 24000);
+
+
+
         }
       }, reject);
     });
@@ -184,27 +210,9 @@ console.log("poop")
                 }
             );
           
-            function sendActivityPing() {
-                console.log("sendActivityPing function called")
-                castSession = castContext.getCurrentSession();
-            if (castSession) {
-                
-                console.log('Sending activity ping');
-
-                castSession.sendMessage(NAMESPACE, {
-                    type: 'activityPing',
-                    timestamp: Date.now()
-                });
-            }else{
-                console.log("wuut")
-            }
-        }
-
-// Send activity ping every 8 minutes (before the 10-minute background trigger)
-setInterval(sendActivityPing, 24000);
+  
 
 
-            console.log(castButton)
 
             playButton.addEventListener('click', () => {
                 console.log('Play button clicked');
