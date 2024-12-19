@@ -71,9 +71,7 @@
         const options = new cast.framework.CastReceiverOptions();
         options.disableIdleTimeout = true; 
 
-        const idleConfig = new cast.framework.system.IdleConfig();
-        idleConfig.idleTimeout = 0;
-        context.setIdleConfig(idleConfig);
+ 
 
         const playerManager = context.getPlayerManager();
 
@@ -107,7 +105,7 @@
         });
 
         // Start the receiver
-        context.start();
+        context.start(options);
         });
 
     </script>
