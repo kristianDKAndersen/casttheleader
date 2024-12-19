@@ -98,19 +98,9 @@
         const playerData = new cast.framework.ui.PlayerData();
         const playerDataBinder = new cast.framework.ui.PlayerDataBinder(playerData);
 
-        context.addEventListener(cast.framework.system.EventType.READY, event => {
-            log('System ready', event);
-        });
+        
 
-        context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
-            log('Sender connected:', event.senderId);
-        });
-
-        context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
-            log('Sender disconnected:', event.senderId);
-        });
-
-
+        log('before listeners');
         context.addCustomMessageListener(NAMESPACE, (event) => {
             log('thetype:', event.data.type);
 
@@ -133,7 +123,17 @@
             }
         });
 
-        
+        context.addEventListener(cast.framework.system.EventType.READY, event => {
+            log('System ready', event);
+        });
+
+        context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, event => {
+            log('Sender connected:', event.senderId);
+        });
+
+        context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, event => {
+            log('Sender disconnected:', event.senderId);
+        });
         // Start the receiver
         context.start(options);
         });
