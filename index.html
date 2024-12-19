@@ -89,12 +89,9 @@ console.log("poop")
             playButton.disabled = false;
 
 
-
-
-
             function sendActivityPing() {
                 console.log("sendActivityPing function called")
-                castSession = castContext.getCurrentSession();
+               
             if (castSession) {
                 
                 console.log('Sending activity ping');
@@ -103,6 +100,7 @@ console.log("poop")
                     type: 'activityPing',
                     timestamp: Date.now()
                 });
+
             }else{
                 console.log("wuut")
             }
