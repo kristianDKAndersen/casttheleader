@@ -96,7 +96,7 @@ console.log("poop")
         
         const request = new chrome.cast.media.LoadRequest(mediaInfo);
         try {
-                 castSession.loadMedia(loadRequest);
+                 castSession.loadMedia(request);
                 } catch(e) {
                 console.error(e);
                 }
